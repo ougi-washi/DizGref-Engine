@@ -69,6 +69,7 @@ b8 dg_engine_init(dg_engine* engine, u32 width, u32 height, const char* title) {
     glfwSetMouseButtonCallback(engine->window, mouse_button_callback);
     glfwSetFramebufferSizeCallback(engine->window, framebuffer_size_callback);
     
+    dg_init_opengl();
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     

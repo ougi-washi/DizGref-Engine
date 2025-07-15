@@ -45,9 +45,9 @@ typedef void (APIENTRY * PFNGLGETSHADERIV)(GLuint shader, GLenum pname, GLint *p
 typedef void (APIENTRY * PFNGLGETSHADERINFOLOG)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 typedef void (APIENTRY * PFNGLGETPROGRAMIV)(GLuint program, GLenum pname, GLint *params);
 typedef void (APIENTRY * PFNGLGETPROGRAMINFOLOG)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
-typedef void (APIENTRY * PFNGLDRAWELEMENTSINSTANCEDPROC)(GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
-typedef void* (APIENTRY * PFNGLMAPBUFFERPROC)(GLenum target, GLenum access);
-typedef GLboolean (APIENTRY * PFNGLUNMAPBUFFERPROC)(GLenum target);
+typedef void (APIENTRY * PFNGLDRAWELEMENTSINSTANCED)(GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
+typedef void* (APIENTRY * PFNGLMAPBUFFER)(GLenum target, GLenum access);
+typedef GLboolean (APIENTRY * PFNGLUNMAPBUFFER)(GLenum target);
 typedef GLint (APIENTRY * PFNGLGETUNIFORMLOCATION)(GLuint program, const GLchar *name);
 typedef void (APIENTRY * PFNGLUNIFORM1I)(GLint location, GLint v0);
 typedef void (APIENTRY * PFNGLUNIFORM1FV)(GLint location, GLsizei count, const GLfloat *value);
@@ -96,9 +96,9 @@ extern PFNGLGETSHADERIV glGetShaderiv;
 extern PFNGLGETSHADERINFOLOG glGetShaderInfoLog; 
 extern PFNGLGETPROGRAMIV glGetProgramiv;
 extern PFNGLGETPROGRAMINFOLOG glGetProgramInfoLog;
-extern PFNGLDRAWELEMENTSINSTANCEDPROC glDrawElementsInstanced;
-extern PFNGLMAPBUFFERPROC glMapBuffer;
-extern PFNGLUNMAPBUFFERPROC glUnmapBuffer;
+extern PFNGLDRAWELEMENTSINSTANCED glDrawElementsInstanced;
+extern PFNGLMAPBUFFER glMapBuffer;
+extern PFNGLUNMAPBUFFER glUnmapBuffer;
 extern PFNGLGETUNIFORMLOCATION glGetUniformLocation;
 extern PFNGLUNIFORM1I glUniform1i;
 extern PFNGLUNIFORM1FV glUniform1fv;
@@ -116,6 +116,6 @@ extern PFNGLDELETEFRAMEBUFFERS glDeleteFramebuffers;
 extern PFNGLRENDERBUFFERSTORAGE glRenderbufferStorage;
 extern PFNGLCHECKFRAMEBUFFERSTATUS glCheckFramebufferStatus;
 
-extern void at_init_opengl();
+extern void dg_init_opengl();
 
 #endif // DG_GL_H

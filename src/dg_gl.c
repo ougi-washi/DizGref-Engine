@@ -1,7 +1,8 @@
 // DizGref-Engine - Ougi Washi
 
 #include "dg_gl.h"
-#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 PFNGLDELETEBUFFERS glDeleteBuffers = NULL;
 PFNGLGENBUFFERS glGenBuffers = NULL;
@@ -34,9 +35,9 @@ PFNGLGETSHADERIV glGetShaderiv = NULL;
 PFNGLGETSHADERINFOLOG glGetShaderInfoLog = NULL;
 PFNGLGETPROGRAMIV glGetProgramiv = NULL;
 PFNGLGETPROGRAMINFOLOG glGetProgramInfoLog = NULL;
-PFNGLDRAWELEMENTSINSTANCEDPROC glDrawElementsInstanced = NULL;
-PFNGLMAPBUFFERPROC glMapBuffer = NULL;
-PFNGLUNMAPBUFFERPROC glUnmapBuffer = NULL;
+PFNGLDRAWELEMENTSINSTANCED glDrawElementsInstanced = NULL;
+PFNGLMAPBUFFER glMapBuffer = NULL;
+PFNGLUNMAPBUFFER glUnmapBuffer = NULL;
 PFNGLGETUNIFORMLOCATION glGetUniformLocation = NULL;
 PFNGLUNIFORM1I glUniform1i = NULL;
 PFNGLUNIFORM1FV glUniform1fv = NULL;
@@ -56,9 +57,12 @@ PFNGLCHECKFRAMEBUFFERSTATUS glCheckFramebufferStatus = NULL;
 
 #define INIT_OPENGL_FUNCTION(func, func_type) \
     func = (func_type)glfwGetProcAddress(#func); \
-    assert(func);
+    if (!func) { \
+        fprintf(stderr, "Failed to load OpenGL function: %s\n", #func); \
+        exit(1); \
+    }
 
-void at_init_opengl() {
+void dg_init_opengl() {
     INIT_OPENGL_FUNCTION(glDeleteBuffers, PFNGLDELETEBUFFERS);
     INIT_OPENGL_FUNCTION(glGenBuffers, PFNGLGENBUFFERS);
     INIT_OPENGL_FUNCTION(glBindBuffer, PFNGLBINDBUFFER);
@@ -90,9 +94,9 @@ void at_init_opengl() {
     INIT_OPENGL_FUNCTION(glGetShaderInfoLog, PFNGLGETSHADERINFOLOG);
     INIT_OPENGL_FUNCTION(glGetProgramiv, PFNGLGETPROGRAMIV);
     INIT_OPENGL_FUNCTION(glGetProgramInfoLog, PFNGLGETPROGRAMINFOLOG);
-    INIT_OPENGL_FUNCTION(glDrawElementsInstanced, PFNGLDRAWELEMENTSINSTANCEDPROC);
-    INIT_OPENGL_FUNCTION(glMapBuffer, PFNGLMAPBUFFERPROC);
-    INIT_OPENGL_FUNCTION(glUnmapBuffer, PFNGLUNMAPBUFFERPROC);
+    INIT_OPENGL_FUNCTION(glDrawElementsInstanced, PFNGLDRAWELEMENTSINSTANCED);
+    INIT_OPENGL_FUNCTION(glMapBuffer, PFNGLMAPBUFFER);
+    INIT_OPENGL_FUNCTION(glUnmapBuffer, PFNGLUNMAPBUFFER);
     INIT_OPENGL_FUNCTION(glGetUniformLocation, PFNGLGETUNIFORMLOCATION);
     INIT_OPENGL_FUNCTION(glUniform1i, PFNGLUNIFORM1I);
     INIT_OPENGL_FUNCTION(glUniform1fv, PFNGLUNIFORM1FV);
@@ -110,4 +114,3 @@ void at_init_opengl() {
     INIT_OPENGL_FUNCTION(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGE);
     INIT_OPENGL_FUNCTION(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUS);
 }
-
