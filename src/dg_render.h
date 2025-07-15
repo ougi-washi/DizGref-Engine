@@ -4,16 +4,11 @@
 #define DG_RENDER_H
 
 #include "dg_types.h"
+#include "dg_gl.h"
 #include <GLFW/glfw3.h>
 #include <time.h>
 #include <assert.h>
 #include <pthread.h>
-
-#ifdef __APPLE__
-#include <OpenGL/gl3.h>
-#else
-#include <GL/gl.h>
-#endif
 
 #define PI 3.14159265359
 
