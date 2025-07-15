@@ -3,8 +3,8 @@
 #ifndef DG_RENDER_H
 #define DG_RENDER_H
 
-#include "dg_types.h"
 #include "dg_gl.h"
+#include "dg_math.h"
 #include <GLFW/glfw3.h>
 #include <time.h>
 #include <assert.h>
@@ -19,16 +19,6 @@
 #define MAX_VERTICES 65536
 #define MAX_INDICES 65536
 #define MAX_PATH_LENGTH 256
-
-static dg_mat4 mat4_identity(void) {
-    dg_mat4 I = { {
-        1,0,0,0,
-        0,1,0,0,
-        0,0,1,0,
-        0,0,0,1
-    } };
-    return I;
-}
 
 typedef struct {
     dg_vec3 position;
@@ -179,22 +169,5 @@ f64 get_delta_time(const dg_engine* engine);
 time_t get_file_mtime(const char* path);
 char* load_file(const char* path);
 void create_fullscreen_quad(GLuint* vao, GLuint* vbo);
-
-// Math (TODO: Change all args to ptrs for performance)
-#define PI 3.14159265359
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#define max(a, b) ((a) > (b) ? (a) : (b))
-f32 vec3_length(dg_vec3 v);
-dg_mat4 mat4_perspective(float fov_y, float aspect, float near, float far);
-dg_vec3 vec3_sub(dg_vec3 a, dg_vec3 b);
-dg_vec3 vec3_norm(dg_vec3 v);
-dg_vec3 vec3_cross(dg_vec3 a, dg_vec3 b);
-dg_mat4 mat4_look_at(dg_vec3 eye, dg_vec3 center, dg_vec3 up);
-dg_mat4 mat4_mul(const dg_mat4 A, const dg_mat4 B);
-dg_mat4 mat4_translate(const dg_vec3* v); 
-dg_mat4 mat4_rotate_x(dg_mat4 m, f32 angle);
-dg_mat4 mat4_rotate_y(dg_mat4 m, f32 angle);
-dg_mat4 mat4_rotate_z(dg_mat4 m, f32 angle);
-dg_mat4 mat4_scale(const dg_vec3* v);
 
 #endif // DG_RENDER_H

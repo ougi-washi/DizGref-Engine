@@ -22,11 +22,6 @@ typedef char c8;
 typedef unsigned char uc8;
 typedef size_t sz;
 
-typedef struct { f32 m[16]; } dg_mat4;
-typedef struct { f32 x, y, z; } dg_vec3;
-typedef struct { f32 x, y, z, w; } dg_vec4;
-typedef struct { f32 x, y; } dg_vec2;
-
 #ifndef RESOURCES_DIR
 #  error "RESOURCES_DIR not defined!"
 #endif

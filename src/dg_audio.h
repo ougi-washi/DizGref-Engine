@@ -3,7 +3,7 @@
 #ifndef DG_AUDIO_H
 #define DG_AUDIO_H
 
-#include "dg_types.h"
+#include "dg_math.h"
 #include <portaudio.h>
 
 void dg_audio_init();
