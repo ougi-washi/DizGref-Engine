@@ -10,6 +10,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 // Fullscreen quad vertex shader
 static const char* quad_vertex_shader = 
 "#version 330 core\n"
@@ -83,6 +86,11 @@ b8 dg_engine_init(dg_engine* engine, u32 width, u32 height, const char* title) {
 }
 
 void dg_engine_cleanup(dg_engine* engine) {
+    // Cleanup textures
+    for (u32 i = 0; i < engine->texture_count; i++) {
+        dg_texture_cleanup(&engine->textures[i]);
+    }
+
     // Cleanup shaders
     for (u32 i = 0; i < engine->dg_shader_count; i++) {
         dg_shader_cleanup(&engine->shaders[i]);
@@ -181,6 +189,46 @@ char *read_file(const char *path) {
     buf[len] = '\0';
     fclose(f);
     return buf;
+}
+
+dg_texture* load_texture(dg_engine* engine, const char* file_path) {
+    stbi_set_flip_vertically_on_load(1);
+
+    engine->texture_count++;
+    dg_texture* texture = &engine->textures[engine->texture_count - 1];
+
+    unsigned char* pixels = stbi_load(file_path, &texture->width, &texture->height, &texture->channels, 0);
+    if (!pixels) {
+        fprintf(stderr, "Error: could not load image %s\n", file_path);
+        return 0;
+    }
+
+    glGenTextures(1, &texture->id);
+    glActiveTexture(GL_TEXTURE0);             // always bind to unit 0 by default
+    glBindTexture(GL_TEXTURE_2D, texture->id);
+
+    // Upload to GPU
+    GLenum format = (texture->channels == 4) ? GL_RGBA : GL_RGB;
+    glTexImage2D(GL_TEXTURE_2D, 0, format, texture->width, texture->height, 0, format, GL_UNSIGNED_BYTE, pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Set filtering/wrapping
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT);
+
+    stbi_image_free(pixels);
+    return texture;
+}
+
+void dg_texture_cleanup(dg_texture* texture){
+    glDeleteTextures(1, &texture->id);
+    texture->id = 0;
+    texture->width = 0;
+    texture->height = 0;
+    texture->channels = 0;
+    texture->path[0] = '\0';
 }
 
 b8 dg_shader_load_internal(dg_shader* shader) {

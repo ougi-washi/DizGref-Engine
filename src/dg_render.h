@@ -14,6 +14,7 @@
 
 #define MAX_BUFFERS 8
 #define MAX_UNIFORMS 32
+#define MAX_TEXTURES 128
 #define MAX_SHADERS 64
 #define MAX_MESHES 64
 #define MAX_VERTICES 65536
@@ -36,6 +37,14 @@ typedef struct {
     time_t fragment_mtime;
     b8 needs_reload;
 } dg_shader;
+
+typedef struct dg_texture {
+    char path[MAX_PATH_LENGTH];
+    GLuint id;
+    i32 width;
+    i32 height;
+    i32 channels;
+} dg_texture;
 
 typedef struct {
     dg_vertex* vertices;
@@ -91,6 +100,9 @@ typedef struct {
     
     dg_render_buffer buffers[MAX_BUFFERS];
     u32 buffer_count;
+
+    dg_texture textures[MAX_TEXTURES];
+    u32 texture_count;
     
     dg_shader shaders[MAX_SHADERS];
     u32 dg_shader_count;
@@ -126,6 +138,10 @@ void dg_engine_clear();
 void dg_engine_swap_buffers(dg_engine* engine);
 void dg_engine_poll_events(dg_engine* engine);
 void dg_engine_check_exit_keys(dg_engine* engine, i32* keys, i32 key_count);
+
+// Texture functions
+dg_texture* dg_texture_load(dg_engine* engine, const char* path);
+void dg_texture_cleanup(dg_texture* texture);
 
 // Shader functions
 dg_shader* dg_shader_load(dg_engine* engine, const char* vertex_path, const char* fragment_path);

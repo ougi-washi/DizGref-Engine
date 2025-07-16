@@ -64,6 +64,7 @@ typedef void (APIENTRY * PFNGLDELETERENDERBUFFERS)(GLsizei n, const GLuint *rend
 typedef void (APIENTRY * PFNGLDELETEFRAMEBUFFERS)(GLsizei n, const GLuint *framebuffers);
 typedef void (APIENTRY * PFNGLRENDERBUFFERSTORAGE)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
 typedef GLenum (APIENTRY * PFNGLCHECKFRAMEBUFFERSTATUS)(GLenum target);
+typedef void (APIENTRY * PFNGLGENERATEMIPMAP)(GLenum target);
 
 extern PFNGLDELETEBUFFERS glDeleteBuffers;
 extern PFNGLGENBUFFERS glGenBuffers;
@@ -115,6 +116,7 @@ extern PFNGLDELETERENDERBUFFERS glDeleteRenderbuffers;
 extern PFNGLDELETEFRAMEBUFFERS glDeleteFramebuffers;
 extern PFNGLRENDERBUFFERSTORAGE glRenderbufferStorage;
 extern PFNGLCHECKFRAMEBUFFERSTATUS glCheckFramebufferStatus;
+extern PFNGLGENERATEMIPMAP glGenerateMipmap;
 
 extern void dg_init_opengl();
 
