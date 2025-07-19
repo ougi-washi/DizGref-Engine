@@ -47,6 +47,7 @@ b8 dg_engine_init(dg_engine* engine, u32 width, u32 height, const char* title) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwSwapInterval(1);
     
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -248,9 +249,9 @@ b8 dg_shader_load_internal(dg_shader* shader) {
         free(fragment_source);
         return false;
     }
-    
     shader->program = create_shader_program(vertex_source, fragment_source);
-    
+    printf("Shader - created program: %d, from %s, %s\n", shader->program, shader->vertex_path, shader->fragment_path);
+
     free(vertex_source);
     free(fragment_source);
     
@@ -260,7 +261,7 @@ b8 dg_shader_load_internal(dg_shader* shader) {
     
     shader->vertex_mtime = get_file_mtime(shader->vertex_path);
     shader->fragment_mtime = get_file_mtime(shader->fragment_path);
-    printf("Shader loaded: %s, %s\n", shader->vertex_path, shader->fragment_path);
+    printf("Shader - loaded: %s, %s\n", shader->vertex_path, shader->fragment_path);
     return true;
 }
 
@@ -282,12 +283,12 @@ dg_shader* dg_shader_load(dg_engine* engine, const char* vertex_path, const char
         strcpy(new_fragment_path, RESOURCES_DIR);
         strcat(new_fragment_path, fragment_path);
     }
-    
+
     strcpy(new_shader->vertex_path, new_vertex_path);
     strcpy(new_shader->fragment_path, new_fragment_path);
     free(new_vertex_path);
     free(new_fragment_path);
-
+    
     if (dg_shader_load_internal(new_shader)) {
         return new_shader;
     }
@@ -565,7 +566,7 @@ void dg_model_render(dg_engine* engine, dg_model* model) {
         dg_shader* sh = mesh->shader;
 
         //glUseProgram(sh->program);
-        dg_shader_use(engine, sh, false);
+        dg_shader_use(engine, sh, true);
 
         dg_mat4 vp  = mat4_mul(proj, view);
         dg_mat4 mvp = mat4_mul(vp, mesh->matrix); 
@@ -645,6 +646,8 @@ b8 dg_render_buffer_create(dg_render_buffer* buffer, u32 width, u32 height) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffer->texture, 0);
     
     // Create depth buffer
@@ -653,6 +656,20 @@ b8 dg_render_buffer_create(dg_render_buffer* buffer, u32 width, u32 height) {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer->depth_buffer);
     
+    // Create previous texture
+    glGenTextures(1, &buffer->prev_texture);
+    glBindTexture(GL_TEXTURE_2D, buffer->prev_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   
+    // Create framebuffer for previous frame (for easy copying)
+    glGenFramebuffers(1, &buffer->prev_framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, buffer->prev_framebuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffer->prev_texture, 0);
+
     // Check framebuffer completeness
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         fprintf(stderr, "Framebuffer not complete!\n");
@@ -664,13 +681,32 @@ b8 dg_render_buffer_create(dg_render_buffer* buffer, u32 width, u32 height) {
     return true;
 }
 
+void dg_render_buffer_copy_to_previous(dg_render_buffer* buffer) {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->framebuffer);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->prev_framebuffer);
+    
+    glBlitFramebuffer(
+        0, 0, buffer->width, buffer->height,  // Source rectangle
+        0, 0, buffer->width, buffer->height,  // Destination rectangle
+        GL_COLOR_BUFFER_BIT,                  // Copy color buffer
+        GL_NEAREST                            // Use nearest filtering for exact copy
+    );
+    
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
 void dg_render_buffer_bind(dg_render_buffer* buffer) {
+    dg_render_buffer_copy_to_previous(buffer);
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->framebuffer);
     glViewport(0, 0, buffer->width, buffer->height);
 }
 
-void dg_render_buffer_unbind(void) {
+void dg_render_buffer_unbind(dg_render_buffer* buf) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //GLuint tmp = buf->prev_texture;
+    //buf->prev_texture = buf->texture;
+    //buf->texture = tmp;
 }
 
 void dg_render_buffer_cleanup(dg_render_buffer* buffer) {
@@ -803,6 +839,7 @@ void dg_uniform_set_buffer_texture(dg_engine* engine, const char* name, dg_rende
 
 void dg_uniform_apply(dg_engine* engine, dg_shader* shader) {
     glUseProgram(shader->program);
+    u32 texture_unit = 0;
     for (u32 i = 0; i < engine->dg_uniform_count; i++) {
         dg_uniform* uniform = &engine->uniforms[i];
         GLint location = glGetUniformLocation(shader->program, uniform->name); 
@@ -826,9 +863,10 @@ void dg_uniform_apply(dg_engine* engine, dg_shader* shader) {
                 glUniform1i(location, uniform->value.i);
                 break;
             case dg_uniform_TEXTURE:
-                glActiveTexture(GL_TEXTURE0 + i);
+                glActiveTexture(GL_TEXTURE0 + texture_unit);
                 glBindTexture(GL_TEXTURE_2D, uniform->value.texture);
-                glUniform1i(location, i);
+                glUniform1i(location, texture_unit);
+                texture_unit++;
                 break;
         }
     }

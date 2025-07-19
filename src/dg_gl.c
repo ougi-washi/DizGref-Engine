@@ -55,6 +55,7 @@ PFNGLDELETEFRAMEBUFFERS glDeleteFramebuffers = NULL;
 PFNGLRENDERBUFFERSTORAGE glRenderbufferStorage = NULL;
 PFNGLCHECKFRAMEBUFFERSTATUS glCheckFramebufferStatus = NULL;
 PFNGLGENERATEMIPMAP glGenerateMipmap = NULL;
+PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
 
 #define INIT_OPENGL_FUNCTION(func, func_type) \
     func = (func_type)glfwGetProcAddress(#func); \
@@ -115,4 +116,5 @@ void dg_init_opengl() {
     INIT_OPENGL_FUNCTION(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGE);
     INIT_OPENGL_FUNCTION(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUS);
     INIT_OPENGL_FUNCTION(glGenerateMipmap, PFNGLGENERATEMIPMAP);
+    INIT_OPENGL_FUNCTION(glBlitFramebuffer, PFNGLBLITFRAMEBUFFER);
 }

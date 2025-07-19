@@ -88,6 +88,8 @@ typedef struct {
 typedef struct {
     GLuint framebuffer;
     GLuint texture;
+    GLuint prev_framebuffer;
+    GLuint prev_texture;
     GLuint depth_buffer;
     u32 width;
     u32 height;
@@ -128,62 +130,62 @@ typedef struct {
 } dg_engine;
 
 // Engine functions
-b8 dg_engine_init(dg_engine* engine, u32 width, u32 height, const char* title);
-void dg_engine_cleanup(dg_engine* engine);
-b8 dg_engine_should_close(dg_engine* engine);
-void dg_engine_update(dg_engine* engine);
-void dg_engine_render_quad(dg_engine* engine);
-void dg_engine_render(dg_engine* engine);
-void dg_engine_clear();
-void dg_engine_swap_buffers(dg_engine* engine);
-void dg_engine_poll_events(dg_engine* engine);
-void dg_engine_check_exit_keys(dg_engine* engine, i32* keys, i32 key_count);
+extern b8 dg_engine_init(dg_engine* engine, u32 width, u32 height, const char* title);
+extern void dg_engine_cleanup(dg_engine* engine);
+extern b8 dg_engine_should_close(dg_engine* engine);
+extern void dg_engine_update(dg_engine* engine);
+extern void dg_engine_render_quad(dg_engine* engine);
+extern void dg_engine_render(dg_engine* engine);
+extern void dg_engine_clear();
+extern void dg_engine_swap_buffers(dg_engine* engine);
+extern void dg_engine_poll_events(dg_engine* engine);
+extern void dg_engine_check_exit_keys(dg_engine* engine, i32* keys, i32 key_count);
 
 // Texture functions
-dg_texture* dg_texture_load(dg_engine* engine, const char* path);
-void dg_texture_cleanup(dg_texture* texture);
+extern dg_texture* dg_texture_load(dg_engine* engine, const char* path);
+extern void dg_texture_cleanup(dg_texture* texture);
 
 // Shader functions
-dg_shader* dg_shader_load(dg_engine* engine, const char* vertex_path, const char* fragment_path);
-b8 dg_shader_reload_if_changed(dg_shader* shader);
-void dg_shader_use(dg_engine* engine, dg_shader* shader, const b8 update_uniforms);
-void dg_shader_cleanup(dg_shader* shader);
-GLuint dg_shader_get_uniform_location(dg_shader* shader, const char* name);
+extern dg_shader* dg_shader_load(dg_engine* engine, const char* vertex_path, const char* fragment_path);
+extern b8 dg_shader_reload_if_changed(dg_shader* shader);
+extern void dg_shader_use(dg_engine* engine, dg_shader* shader, const b8 update_uniforms);
+extern void dg_shader_cleanup(dg_shader* shader);
+extern GLuint dg_shader_get_uniform_location(dg_shader* shader, const char* name);
 
 // Mesh functions
-void dg_mesh_translate(dg_mesh* mesh, const dg_vec3* v);
-void dg_mesh_rotate(dg_mesh* mesh, const dg_vec3* v);
-void dg_mesh_scale(dg_mesh* mesh, const dg_vec3* v);
+extern void dg_mesh_translate(dg_mesh* mesh, const dg_vec3* v);
+extern void dg_mesh_rotate(dg_mesh* mesh, const dg_vec3* v);
+extern void dg_mesh_scale(dg_mesh* mesh, const dg_vec3* v);
 
 // Model functions
-b8 dg_model_load_obj(dg_model* model, const char* path, dg_shader** shaders, const sz dg_shader_count); 
-void dg_model_render(dg_engine* engine, dg_model* model);
-void dg_model_cleanup(dg_model* model);
-void dg_model_translate(dg_model* model, const dg_vec3* v);
-void dg_model_rotate(dg_model* model, const dg_vec3* v);
-void dg_model_scale(dg_model* model, const dg_vec3* v);
+extern b8 dg_model_load_obj(dg_model* model, const char* path, dg_shader** shaders, const sz dg_shader_count); 
+extern void dg_model_render(dg_engine* engine, dg_model* model);
+extern void dg_model_cleanup(dg_model* model);
+extern void dg_model_translate(dg_model* model, const dg_vec3* v);
+extern void dg_model_rotate(dg_model* model, const dg_vec3* v);
+extern void dg_model_scale(dg_model* model, const dg_vec3* v);
 
 // Buffer functions
-b8 dg_render_buffer_create(dg_render_buffer* buffer, u32 width, u32 height);
-void dg_render_buffer_bind(dg_render_buffer* buffer);
-void dg_render_buffer_unbind(void);
-void dg_render_buffer_cleanup(dg_render_buffer* buffer);
+extern b8 dg_render_buffer_create(dg_render_buffer* buffer, u32 width, u32 height);
+extern void dg_render_buffer_bind(dg_render_buffer* buffer);
+extern void dg_render_buffer_unbind(dg_render_buffer* buf);
+extern void dg_render_buffer_cleanup(dg_render_buffer* buffer);
 
 // Uniform functions
-void dg_uniform_set_float(dg_engine* engine, const char* name, f32 value);
-void dg_uniform_set_vec2(dg_engine* engine, const char* name, dg_vec2 value);
-void dg_uniform_set_vec3(dg_engine* engine, const char* name, dg_vec3 value);
-void dg_uniform_set_vec4(dg_engine* engine, const char* name, dg_vec4 value);
-void dg_uniform_set_int(dg_engine* engine, const char* name, i32 value);
-void dg_uniform_set_texture(dg_engine* engine, const char* name, GLuint texture);
-void dg_uniform_set_buffer_texture(dg_engine* engine, const char* name, dg_render_buffer* buffer);
-void dg_uniform_apply(dg_engine* engine, dg_shader* shader); // make sure the shader is in use
+extern void dg_uniform_set_float(dg_engine* engine, const char* name, f32 value);
+extern void dg_uniform_set_vec2(dg_engine* engine, const char* name, dg_vec2 value);
+extern void dg_uniform_set_vec3(dg_engine* engine, const char* name, dg_vec3 value);
+extern void dg_uniform_set_vec4(dg_engine* engine, const char* name, dg_vec4 value);
+extern void dg_uniform_set_int(dg_engine* engine, const char* name, i32 value);
+extern void dg_uniform_set_texture(dg_engine* engine, const char* name, GLuint texture);
+extern void dg_uniform_set_buffer_texture(dg_engine* engine, const char* name, dg_render_buffer* buffer);
+extern void dg_uniform_apply(dg_engine* engine, dg_shader* shader); // make sure the shader is in use
 
 // Utility functions
-f64 get_time(void);
-f64 get_delta_time(const dg_engine* engine);
-time_t get_file_mtime(const char* path);
-char* load_file(const char* path);
-void create_fullscreen_quad(GLuint* vao, GLuint* vbo);
+extern f64 get_time(void);
+extern f64 get_delta_time(const dg_engine* engine);
+extern time_t get_file_mtime(const char* path);
+extern char* load_file(const char* path);
+extern void create_fullscreen_quad(GLuint* vao, GLuint* vbo);
 
 #endif // DG_RENDER_H
