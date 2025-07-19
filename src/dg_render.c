@@ -191,13 +191,16 @@ char *read_file(const char *path) {
     return buf;
 }
 
-dg_texture* load_texture(dg_engine* engine, const char* file_path) {
+dg_texture* dg_texture_load(dg_engine* engine, const char* file_path) {
     stbi_set_flip_vertically_on_load(1);
 
     engine->texture_count++;
     dg_texture* texture = &engine->textures[engine->texture_count - 1];
+    
+    const c8 full_path[MAX_PATH_LENGTH] = RESOURCES_DIR;
+    strncat((c8*)full_path, file_path, MAX_PATH_LENGTH - strlen(full_path) - 1);
 
-    unsigned char* pixels = stbi_load(file_path, &texture->width, &texture->height, &texture->channels, 0);
+    unsigned char* pixels = stbi_load(full_path, &texture->width, &texture->height, &texture->channels, 0);
     if (!pixels) {
         fprintf(stderr, "Error: could not load image %s\n", file_path);
         return 0;
@@ -561,7 +564,8 @@ void dg_model_render(dg_engine* engine, dg_model* model) {
         dg_mesh* mesh = &model->meshes[i];
         dg_shader* sh = mesh->shader;
 
-        glUseProgram(sh->program);
+        //glUseProgram(sh->program);
+        dg_shader_use(engine, sh, false);
 
         dg_mat4 vp  = mat4_mul(proj, view);
         dg_mat4 mvp = mat4_mul(vp, mesh->matrix); 
@@ -579,7 +583,6 @@ void dg_model_render(dg_engine* engine, dg_model* model) {
         // send to the GPU other uniforms (lights if forward rendering, etc)
 
         // draw
-        //
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glEnable(GL_CULL_FACE);

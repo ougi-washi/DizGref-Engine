@@ -5,6 +5,7 @@ uniform vec2 mouse;
 uniform int frame;
 uniform float time;
 uniform sampler2D buffer1;
+uniform sampler2D model;
 in vec2 TexCoord;
 out vec4 FragColor;
 
@@ -14,4 +15,5 @@ float noise(vec2 p) {
 
 void main() {
     FragColor = texture(buffer1, TexCoord);
+    FragColor = mix(texture(model, TexCoord), FragColor, 0.5);
 }

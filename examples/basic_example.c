@@ -8,6 +8,10 @@
 #define HEIGHT 1080
 
 i32 main() {
+    // audio setup  
+    dg_audio_init();
+    
+    // engine setup
     dg_engine engine = {0};
     bool dg_engine_success = dg_engine_init(&engine, WIDTH, HEIGHT, "Abstract Shader Engine");
     assert(dg_engine_success);
@@ -28,9 +32,13 @@ i32 main() {
     assert(dg_mesh_shaders);
     dg_model model = {0};
     dg_model_load_obj(&model, "cube.obj", dg_mesh_shaders, 1);
-    
-    dg_audio_init();
-   
+    dg_render_buffer model_buf = {0};
+    dg_render_buffer_create(&model_buf, WIDTH, HEIGHT);
+
+    // texture setup
+    dg_texture* texture = dg_texture_load(&engine, "perlin_256.png");
+    assert(texture);
+  
     while (!dg_engine_should_close(&engine)) {
 
         // input
@@ -41,18 +49,29 @@ i32 main() {
         dg_engine_update(&engine);
         
         dg_uniform_set_vec3(&engine, "amps", dg_audio_get_amplitudes());
-
+        dg_uniform_set_texture(&engine, "perlin_noise", texture->id);
+        
         dg_shader_use(&engine, buffer1_shader, true);
-        dg_render_buffer_bind(&buffer1);
+        
+        // render model
+        dg_render_buffer_bind(&model_buf);
         dg_engine_clear();
-        //dg_engine_render_quad(&engine);
         const dg_vec3 rot_angle = {0,0,get_delta_time(&engine)};
         dg_model_rotate(&model, &rot_angle);
         dg_model_render(&engine, &model);
         dg_render_buffer_unbind();
-        
+
+        // render buffer 1
+        dg_render_buffer_bind(&buffer1);
+        dg_engine_clear();
+        dg_shader_use(&engine, buffer1_shader, true);
+        dg_engine_render_quad(&engine);
+        dg_render_buffer_unbind();
+       
+        // render main shader (screen)
         dg_shader_use(&engine, main_shader, true);
         dg_uniform_set_texture(&engine, "buffer1", buffer1.texture);
+        dg_uniform_set_texture(&engine, "model", model_buf.texture);
         dg_engine_render(&engine);
         dg_engine_swap_buffers(&engine);
         // Print some debug info occasionally
@@ -65,6 +84,7 @@ i32 main() {
     dg_model_cleanup(&model);
     dg_audio_cleanup();
     dg_render_buffer_cleanup(&buffer1);
+    dg_render_buffer_cleanup(&model_buf);
     dg_engine_cleanup(&engine);
     return 0;
 }

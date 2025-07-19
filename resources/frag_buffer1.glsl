@@ -7,6 +7,8 @@ uniform float delta_time;
 uniform int frame;
 uniform vec3 amps;
 uniform float frequency;
+uniform sampler2D perlin_noise;
+
 in vec2 TexCoord;
 out vec4 FragColor;
 
