@@ -3,6 +3,7 @@
 #include "dg_audio.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #define SAMPLE_RATE 44100
 #define FRAMES_PER_BUFFER 1024
