@@ -137,8 +137,8 @@ void dg_engine_update(dg_engine* engine) {
     dg_uniform_set_float(engine, "time", engine->time);
     dg_uniform_set_float(engine, "delta_time", engine->delta_time);
     dg_uniform_set_int(engine, "frame", engine->frame_count);
-    //dg_uniform_set_vec2(engine, "resolution", (dg_vec2){engine->window_width, engine->window_height});
-    //dg_uniform_set_vec2(engine, "mouse", (dg_vec2){engine->mouse_x, engine->mouse_y});
+    dg_uniform_set_vec2(engine, "resolution", (dg_vec2){engine->window_width, engine->window_height});
+    dg_uniform_set_vec2(engine, "mouse", (dg_vec2){engine->mouse_x, engine->mouse_y});
 }
 
 void dg_engine_render_quad(dg_engine* engine) {
