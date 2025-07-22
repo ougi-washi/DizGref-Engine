@@ -192,7 +192,7 @@ char *read_file(const char *path) {
     return buf;
 }
 
-dg_texture* dg_texture_load(dg_engine* engine, const char* file_path) {
+dg_texture* dg_texture_load(dg_engine* engine, const char* file_path, const dg_texture_wrap wrap) {
     stbi_set_flip_vertically_on_load(1);
 
     engine->texture_count++;
@@ -219,9 +219,14 @@ dg_texture* dg_texture_load(dg_engine* engine, const char* file_path) {
     // Set filtering/wrapping
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT);
-
+    if (wrap == DG_CLAMP) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+    } else if (wrap == DG_REPEAT) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT);
+    }
+    
     stbi_image_free(pixels);
     return texture;
 }

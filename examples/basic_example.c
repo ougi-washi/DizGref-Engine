@@ -35,7 +35,7 @@ i32 main() {
     dg_shader* post_process_shader = dg_shader_load(&engine, "vert.glsl", "frag_post_process.glsl");
 
     // texture setup
-    dg_texture* perlin_256= dg_texture_load(&engine, "perlin_256.png");
+    dg_texture* perlin_256= dg_texture_load(&engine, "perlin_256.png", DG_REPEAT);
 
     while (!dg_engine_should_close(&engine)) {
 

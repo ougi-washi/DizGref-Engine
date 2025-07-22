@@ -142,7 +142,8 @@ extern void dg_engine_poll_events(dg_engine* engine);
 extern void dg_engine_check_exit_keys(dg_engine* engine, i32* keys, i32 key_count);
 
 // Texture functions
-extern dg_texture* dg_texture_load(dg_engine* engine, const char* path);
+typedef enum { DG_REPEAT, DG_CLAMP } dg_texture_wrap;
+extern dg_texture* dg_texture_load(dg_engine* engine, const char* path, const dg_texture_wrap wrap);
 extern void dg_texture_cleanup(dg_texture* texture);
 
 // Shader functions
