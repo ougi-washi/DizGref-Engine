@@ -25,6 +25,9 @@ static const char* quad_vertex_shader =
 "}\n";
 
 
+static f64 dg_target_fps = 60.0;
+
+
 // Forward declarations
 static void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -158,6 +161,12 @@ void dg_engine_clear(){
 }
 
 void dg_engine_swap_buffers(dg_engine* engine) {
+    // 60fps
+    f64 time_left = 1 / dg_target_fps - engine->delta_time;
+    if (time_left > 0) {
+        dg_engine_sleep(time_left);
+    }
+    
     glfwSwapBuffers(engine->window);
 }
 
@@ -175,6 +184,14 @@ void dg_engine_check_exit_keys(dg_engine* engine, i32* keys, i32 key_count) {
         }
     }
     glfwSetWindowShouldClose(engine->window, GLFW_TRUE);
+}
+
+void dg_enigne_set_fps(const f64 fps) {
+    dg_target_fps = fps;
+}
+
+void dg_engine_sleep(const f64 seconds) {
+    usleep(seconds * 1000000);
 }
 
 // Shader functions
