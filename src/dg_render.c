@@ -186,6 +186,11 @@ void dg_engine_check_exit_keys(dg_engine* engine, i32* keys, i32 key_count) {
     glfwSetWindowShouldClose(engine->window, GLFW_TRUE);
 }
 
+extern b8 dg_engine_is_key_down(dg_engine* engine, i32 key) {
+    return engine->keys[key];
+}
+
+
 void dg_enigne_set_fps(const f64 fps) {
     dg_target_fps = fps;
 }
