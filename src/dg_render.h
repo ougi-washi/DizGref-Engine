@@ -140,6 +140,7 @@ extern void dg_engine_clear();
 extern void dg_engine_swap_buffers(dg_engine* engine);
 extern void dg_engine_poll_events(dg_engine* engine);
 extern void dg_engine_check_exit_keys(dg_engine* engine, i32* keys, i32 key_count);
+extern b8 dg_engine_is_key_down(dg_engine* engine, i32 key);
 extern void dg_enigne_set_fps(const f64 fps);
 extern void dg_engine_sleep(const f64 seconds);
 
