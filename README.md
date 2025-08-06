@@ -1,4 +1,4 @@
-## DizGref-Engine
+## Capsian Engine
 Simple, fast, and lightweight 2D/3D engine in C.
 
 ### Features
