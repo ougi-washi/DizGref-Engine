@@ -1,7 +1,7 @@
-// Capsian-Engine - Ougi Washi
+// Syphax-Engine - Ougi Washi
 
-#ifndef CE_GL_H
-#define CE_GL_H
+#ifndef SE_GL_H
+#define SE_GL_H
 
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -120,6 +120,6 @@ extern PFNGLCHECKFRAMEBUFFERSTATUS glCheckFramebufferStatus;
 extern PFNGLGENERATEMIPMAP glGenerateMipmap;
 extern PFNGLBLITFRAMEBUFFER glBlitFramebuffer;
 
-extern void ce_init_opengl();
+extern void se_init_opengl();
 
-#endif // CE_GL_H
+#endif // SE_GL_H

@@ -1,16 +1,16 @@
-// Capsian-Engine - Ougi Washi
+// Syphax-Engine - Ougi Washi
 
-#ifndef CE_ARRAY_H
-#define CE_ARRAY_H
+#ifndef SE_ARRAY_H
+#define SE_ARRAY_H
 
 #include <string.h>
 #include <assert.h>
-#include "ce_types.h"
+#include "se_types.h"
 
 // This approach is inspired by arena allocators but per array instead of being block-based to avoid fragmentation and wasted memory
 // while offering a simple array handling interface.
 
-#define CE_DEFINE_ARRAY(_type, _array, _size) \
+#define SE_DEFINE_ARRAY(_type, _array, _size) \
     typedef struct { \
         _type data[_size]; \
         sz size; \
@@ -36,11 +36,11 @@
         memmove(&array->data[index], &array->data[index + 1], sizeof(array->data[index]) * (array->size - index)); \
     } \
     static _type* _array##_get(_array* array, const sz index) { \
-        ce_assert(index >= 0 && index < array->size); \
+        se_assert(index >= 0 && index < array->size); \
         return &array->data[index]; \
     } \
     static void _array##_set(_array* array, const sz index, _type* value) { \
-        ce_assert(index < array->size); \
+        se_assert(index < array->size); \
         array->data[index] = *value; \
     } \
     static void _array##_clear(_array* array) { \
@@ -51,8 +51,8 @@
         return array->size; \
     } \
 
-#define ce_foreach(_array_type, _array, _it) \
+#define se_foreach(_array_type, _array, _it) \
     for (sz _it = 0; _it < _array_type##_get_size(&_array); _it++)
 
 
-#endif // CE_ARRAY_H
+#endif // SE_ARRAY_H

@@ -1,11 +1,11 @@
-// Capsian-Engine - Ougi Washi
+// Syphax-Engine - Ougi Washi
 
-#include "ce_array.h"
+#include "se_array.h"
 #include <stdio.h>
 
 #define ARRAY_SIZE 8
 
-CE_DEFINE_ARRAY(i32, ints, ARRAY_SIZE);
+SE_DEFINE_ARRAY(i32, ints, ARRAY_SIZE);
 
 i32 main() {
     
@@ -17,7 +17,7 @@ i32 main() {
     
     printf("Current size: %zu\n", ints_get_size(&my_ints));
    
-    ce_foreach(ints, my_ints, i) {
+    se_foreach(ints, my_ints, i) {
         printf("%d, ", *ints_get(&my_ints, i));
     }
     printf("\n");
@@ -27,7 +27,7 @@ i32 main() {
     printf("Removed 5th element, current size: %zu\n", ints_get_size(&my_ints));
     printf("Current 5th element: %d\n", *ints_get(&my_ints, 5));
 
-    ce_foreach(ints, my_ints, i) {
+    se_foreach(ints, my_ints, i) {
         printf("%d, ", *ints_get(&my_ints, i));
     }
     printf("\n");

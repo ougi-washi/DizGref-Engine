@@ -1,0 +1,203 @@
+// Syphax-Engine - Ougi Washi
+
+#ifndef SE_RENDER_H
+#define SE_RENDER_H
+
+#include "se_math.h"
+#include "se_array.h"
+#include <GLFW/glfw3.h>
+#include <time.h>
+#include <assert.h>
+#include <pthread.h>
+
+#define PI 3.14159265359
+
+#define SE_MAX_RENDER_BUFFERS 16 
+#define SE_MAX_UNIFORMS 32
+#define SE_MAX_TEXTURES 128
+#define SE_MAX_SHADERS 64
+#define SE_MAX_MESHES 64
+#define SE_MAX_MODELS 1024
+#define SE_MAX_VERTICES 65536
+#define SE_MAX_INDICES 65536
+#define SE_MAX_NAME_LENGTH 64
+#define SE_MAX_PATH_LENGTH 256
+
+typedef struct {
+    se_vec3 position;
+    se_vec3 normal;
+    se_vec2 uv;
+} se_vertex;
+
+typedef enum {
+    SE_UNIFORM_FLOAT,
+    SE_UNIFORM_VEC2,
+    SE_UNIFORM_VEC3,
+    SE_UNIFORM_VEC4,
+    SE_UNIFORM_INT,
+    SE_UNIFORM_TEXTURE
+} se_uniform_type;
+
+typedef struct {
+    char name[SE_MAX_NAME_LENGTH];
+    se_uniform_type type;
+    union {
+        f32 f;
+        se_vec2 vec2;
+        se_vec3 vec3;
+        se_vec4 vec4;
+        i32 i;
+        GLuint texture;
+    } value;
+} se_uniform;
+SE_DEFINE_ARRAY(se_uniform, se_uniforms, SE_MAX_UNIFORMS);
+
+typedef struct {
+    GLuint program;
+    GLuint vertex_shader;
+    GLuint fragment_shader;
+    c8 vertex_path[SE_MAX_PATH_LENGTH];
+    c8 fragment_path[SE_MAX_PATH_LENGTH];
+    time_t vertex_mtime;
+    time_t fragment_mtime;
+    se_uniforms uniforms;
+    b8 needs_reload;
+} se_shader;
+SE_DEFINE_ARRAY(se_shader, se_shaders, SE_MAX_SHADERS);
+
+typedef struct se_texture {
+    char path[SE_MAX_PATH_LENGTH];
+    GLuint id;
+    i32 width;
+    i32 height;
+    i32 channels;
+} se_texture;
+SE_DEFINE_ARRAY(se_texture, se_textures, SE_MAX_TEXTURES);
+
+typedef struct {
+    se_vertex* vertices;
+    u32* indices;
+    u32 vertex_count;
+    u32 index_count;
+    GLuint vao;
+    GLuint vbo;
+    GLuint ebo;
+    se_shader* shader;
+    se_mat4 matrix;  
+} se_mesh;
+SE_DEFINE_ARRAY(se_mesh, se_meshes, SE_MAX_MESHES);
+
+typedef struct {
+    se_meshes meshes;
+} se_model;
+
+typedef struct {
+    GLuint framebuffer;
+    GLuint texture;
+    GLuint prev_framebuffer;
+    GLuint prev_texture;
+    GLuint depth_buffer;
+    u32 width;
+    u32 height;
+} se_render_buffer;
+SE_DEFINE_ARRAY(se_render_buffer, se_render_buffers, SE_MAX_RENDER_BUFFERS);
+
+typedef struct {
+    GLFWwindow* window;
+    u32 window_width;
+    u32 window_height;
+  
+    se_render_buffers render_buffers;
+    se_textures textures;
+    se_shaders shaders;
+    se_uniforms global_uniforms;
+
+    se_model* models;
+    u32 se_model_count;
+   
+    f64 time;
+    f64 delta_time;
+    f64 last_frame_time;
+    i32 frame_count;
+    
+    b8 keys[1024];
+    f64 mouse_x, mouse_y;
+    f64 mouse_dx, mouse_dy;
+    b8 mouse_buttons[8];
+    
+    GLuint quad_vao;
+    GLuint quad_vbo;
+} se_engine;
+
+// Engine functions
+extern b8 se_engine_init(se_engine* engine, u32 width, u32 height, const char* title);
+extern void se_engine_cleanup(se_engine* engine);
+extern b8 se_engine_should_close(se_engine* engine);
+extern void se_engine_update(se_engine* engine);
+extern void se_engine_render_quad(se_engine* engine);
+extern void se_engine_render(se_engine* engine);
+extern void se_engine_clear();
+extern void se_engine_swap_buffers(se_engine* engine);
+extern void se_engine_poll_events(se_engine* engine);
+extern void se_engine_check_exit_keys(se_engine* engine, i32* keys, i32 key_count);
+extern b8 se_engine_is_key_down(se_engine* engine, i32 key);
+extern void se_enigne_set_fps(const f64 fps);
+extern void se_engine_sleep(const f64 seconds);
+extern se_uniforms* se_engine_get_global_uniforms(se_engine* engine);
+
+// Texture functions
+typedef enum { SE_REPEAT, SE_CLAMP } se_texture_wrap;
+extern se_texture* se_texture_load(se_engine* engine, const char* path, const se_texture_wrap wrap);
+extern void se_texture_cleanup(se_texture* texture);
+
+// Shader functions
+extern se_shader* se_shader_load(se_engine* engine, const char* vertex_path, const char* fragment_path);
+extern b8 se_shader_reload_if_changed(se_shader* shader);
+extern void se_shader_use(se_engine* engine, se_shader* shader, const b8 update_uniforms);
+extern void se_shader_cleanup(se_shader* shader);
+extern GLuint se_shader_get_uniform_location(se_shader* shader, const char* name);
+extern void se_shader_set_float(se_shader* shader, const char* name, f32 value);
+extern void se_shader_set_vec2(se_shader* shader, const char* name, const se_vec2* value);
+extern void se_shader_set_vec3(se_shader* shader, const char* name, const se_vec3* value);
+extern void se_shader_set_vec4(se_shader* shader, const char* name, const se_vec4* value);
+extern void se_shader_set_int(se_shader* shader, const char* name, i32 value);
+extern void se_shader_set_texture(se_shader* shader, const char* name, GLuint texture);
+extern void se_shader_set_buffer_texture(se_shader* shader, const char* name, se_render_buffer* buffer);
+
+// Mesh functions
+extern void se_mesh_translate(se_mesh* mesh, const se_vec3* v);
+extern void se_mesh_rotate(se_mesh* mesh, const se_vec3* v);
+extern void se_mesh_scale(se_mesh* mesh, const se_vec3* v);
+
+// Model functions
+extern b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, const sz se_shader_count); 
+extern void se_model_render(se_engine* engine, se_model* model);
+extern void se_model_cleanup(se_model* model);
+extern void se_model_translate(se_model* model, const se_vec3* v);
+extern void se_model_rotate(se_model* model, const se_vec3* v);
+extern void se_model_scale(se_model* model, const se_vec3* v);
+
+// Buffer functions
+extern b8 se_render_buffer_create(se_render_buffer* buffer, u32 width, u32 height);
+extern void se_render_buffer_bind(se_render_buffer* buffer);
+extern void se_render_buffer_unbind(se_render_buffer* buf);
+extern void se_render_buffer_cleanup(se_render_buffer* buffer);
+
+// Uniform functions
+extern void se_uniform_set_float    (se_uniforms* uniforms, const char* name, f32 value);
+extern void se_uniform_set_vec2     (se_uniforms* uniforms, const char* name, const se_vec2* value);
+extern void se_uniform_set_vec3     (se_uniforms* uniforms, const char* name, const se_vec3* value);
+extern void se_uniform_set_vec4     (se_uniforms* uniforms, const char* name, const se_vec4* value);
+extern void se_uniform_set_int      (se_uniforms* uniforms, const char* name, i32 value);
+extern void se_uniform_set_texture  (se_uniforms* uniforms, const char* name, GLuint texture);
+extern void se_uniform_set_buffer_texture(se_uniforms* uniforms, const char* name, se_render_buffer* buffer);
+extern void se_uniform_apply(se_engine* engine, se_shader* shader);
+
+// Utility functions
+extern f64 get_time(void);
+extern f64 get_delta_time(const se_engine* engine);
+extern time_t get_file_mtime(const char* path);
+extern char* load_file(const char* path);
+extern void create_fullscreen_quad(GLuint* vao, GLuint* vbo);
+
+#endif // SE_RENDER_H

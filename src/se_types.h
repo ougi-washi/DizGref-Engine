@@ -1,7 +1,7 @@
-// Capsian-Engine - Ougi Washi
+// Syphax-Engine - Ougi Washi
 
-#ifndef CE_TYPES_H
-#define CE_TYPES_H
+#ifndef SE_TYPES_H
+#define SE_TYPES_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -30,7 +30,7 @@ typedef size_t sz;
 
 #define MAX_PATH_LENGTH 256
 
-#define ce_assert(expr) if (!(expr)) { fprintf(stderr, "Assertion failed: %s\n", #expr); assert(0); }
-#define ce_assertf(expr, msg) if (!(expr)) { fprintf(stderr, msg); assert(0); }
+#define se_assert(expr) if (!(expr)) { fprintf(stderr, "Assertion failed: %s\n", #expr); assert(0); }
+#define se_assertf(expr, msg) if (!(expr)) { fprintf(stderr, msg); assert(0); }
 
-#endif // CE_TYPES_H
+#endif // SE_TYPES_H

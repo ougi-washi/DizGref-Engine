@@ -1,6 +1,6 @@
-// Capsian-Engine - Ougi Washi
+// Syphax-Engine - Ougi Washi
 
-#include "ce_gl.h"
+#include "se_gl.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -64,7 +64,7 @@ PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
         exit(1); \
     }
 
-void ce_init_opengl() {
+void se_init_opengl() {
     INIT_OPENGL_FUNCTION(glDeleteBuffers, PFNGLDELETEBUFFERS);
     INIT_OPENGL_FUNCTION(glGenBuffers, PFNGLGENBUFFERS);
     INIT_OPENGL_FUNCTION(glBindBuffer, PFNGLBINDBUFFER);
