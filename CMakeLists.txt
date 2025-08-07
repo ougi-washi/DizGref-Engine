@@ -1,9 +1,9 @@
-# DizGref-Engine - Ougi Washi
+# Capsian-Engine - Ougi Washi
 
 ## General
 cmake_minimum_required(VERSION 3.22.1)
 
-project(DIZGREF_ENGINE LANGUAGES C CXX)
+project(CAPSIAN_ENGINE LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 
 if(NOT CMAKE_GENERATOR)
@@ -145,13 +145,13 @@ endmacro()
 
 # Main module
 set(MAIN_MODULE_INCLUDES ${PROJECT_SOURCE_DIR}/${SRC_DIR} ${PROJECT_SOURCE_DIR}/${LIB_DIR})
-setup_library(main_module ${SRC_DIR} "${MAIN_MODULE_INCLUDES}")
-target_link_libraries(main_module PUBLIC glfw OpenGL::GL portaudio)  
+setup_library(MAIN ${SRC_DIR} "${MAIN_MODULE_INCLUDES}")
+target_link_libraries(MAIN PUBLIC glfw OpenGL::GL portaudio)  
 
 macro(setup_executable arg_exec_dir arg_exec_name modules)
     message(STATUS "Generating executable ${arg_exec_name}")
     add_executable(${arg_exec_name} "${arg_exec_dir}/${arg_exec_name}.c")
-    target_link_libraries(${arg_exec_name} PUBLIC main_module)
+    target_link_libraries(${arg_exec_name} PUBLIC MAIN)
     target_compile_definitions(${arg_exec_name} PUBLIC RESOURCES_DIR="${CMAKE_SOURCE_DIR}/${RESOURCES_DIR}/")
     set_target_properties(${arg_exec_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/${BIN_DIR})
 endmacro()
@@ -164,6 +164,6 @@ file(GLOB EXAMPLES 	"${EXAMPLES_DIR}/*.c"
 foreach(EXAMPLE ${EXAMPLES})
    	get_filename_component(EXAMPLE_NAME ${EXAMPLE} NAME_WE)
    	message(STATUS "Adding example ${EXAMPLE_NAME}")
-   	setup_executable(${EXAMPLES_DIR} ${EXAMPLE_NAME} main_module)
+    setup_executable(${EXAMPLES_DIR} ${EXAMPLE_NAME} MAIN)
 endforeach()
 
