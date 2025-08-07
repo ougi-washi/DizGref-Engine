@@ -1,6 +1,8 @@
 ## Syphax Engine
 Simple, fast, and lightweight 2D/3D engine in C.
 
+*** 𐤒𐤐𐤎 ***
+
 ### Features
 * Handle shaders and their uniforms
 * (WIP) Handle SDF objects and operations
