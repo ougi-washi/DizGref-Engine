@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include "stdio.h"
 
 typedef bool b8;
 typedef int8_t i8;

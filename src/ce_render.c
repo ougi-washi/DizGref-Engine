@@ -91,13 +91,15 @@ b8 ce_engine_init(ce_engine* engine, u32 width, u32 height, const char* title) {
 
 void ce_engine_cleanup(ce_engine* engine) {
     // Cleanup textures
-    for (u32 i = 0; i < engine->texture_count; i++) {
-        ce_texture_cleanup(&engine->textures[i]);
+    ce_foreach(ce_textures, engine->textures, i) {
+        ce_texture* curr_texture = ce_textures_get(&engine->textures, i);
+        ce_texture_cleanup(curr_texture);
     }
 
     // Cleanup shaders
-    for (u32 i = 0; i < engine->ce_shader_count; i++) {
-        ce_shader_cleanup(&engine->shaders[i]);
+    ce_foreach(ce_shaders, engine->shaders, i) {
+        ce_shader* curr_shader = ce_shaders_get(&engine->shaders, i);
+        ce_shader_cleanup(curr_shader);
     }
    
     // Cleanup models
@@ -107,9 +109,11 @@ void ce_engine_cleanup(ce_engine* engine) {
     free(engine->models);
     
     // Cleanup buffers
-    for (u32 i = 0; i < engine->buffer_count; i++) {
-        ce_render_buffer_cleanup(&engine->buffers[i]);
+    ce_foreach(ce_render_buffers, engine->render_buffers, i) {
+        ce_render_buffer* curr_buffer = ce_render_buffers_get(&engine->render_buffers, i);
+        ce_render_buffer_cleanup(curr_buffer);
     }
+
     
     // Cleanup quad
     glDeleteVertexArrays(1, &engine->quad_vao);
@@ -132,16 +136,17 @@ void ce_engine_update(ce_engine* engine) {
     engine->frame_count++;
     
     // Check for shader reloads
-    for (u32 i = 0; i < engine->ce_shader_count; i++) {
-        ce_shader_reload_if_changed(&engine->shaders[i]);
+    ce_foreach(ce_shaders, engine->shaders, i) {
+        ce_shader_reload_if_changed(ce_shaders_get(&engine->shaders, i));
     }
     
     // Update built-in uniforms
-    ce_uniform_set_float(engine, "time", engine->time);
-    ce_uniform_set_float(engine, "delta_time", engine->delta_time);
-    ce_uniform_set_int(engine, "frame", engine->frame_count);
-    ce_uniform_set_vec2(engine, "resolution", (ce_vec2){engine->window_width, engine->window_height});
-    ce_uniform_set_vec2(engine, "mouse", (ce_vec2){engine->mouse_x, engine->mouse_y});
+    ce_uniforms* global_uniforms = &engine->global_uniforms;
+    ce_uniform_set_float(global_uniforms, "time", engine->time);
+    ce_uniform_set_float(global_uniforms, "delta_time", engine->delta_time);
+    ce_uniform_set_int(global_uniforms, "frame", engine->frame_count);
+    ce_uniform_set_vec2(global_uniforms, "resolution", ce_vec_ptr(ce_vec2, engine->window_width, engine->window_height));
+    ce_uniform_set_vec2(global_uniforms, "mouse", ce_vec_ptr(ce_vec2, engine->mouse_x, engine->mouse_y));
 }
 
 void ce_engine_render_quad(ce_engine* engine) {
@@ -199,6 +204,10 @@ void ce_engine_sleep(const f64 seconds) {
     usleep(seconds * 1000000);
 }
 
+ce_uniforms* ce_engine_get_global_uniforms(ce_engine* engine) {
+    return &engine->global_uniforms;
+}
+
 // Shader functions
 
 char *read_file(const char *path) {
@@ -217,8 +226,7 @@ char *read_file(const char *path) {
 ce_texture* ce_texture_load(ce_engine* engine, const char* file_path, const ce_texture_wrap wrap) {
     stbi_set_flip_vertically_on_load(1);
 
-    engine->texture_count++;
-    ce_texture* texture = &engine->textures[engine->texture_count - 1];
+    ce_texture* texture = ce_textures_increment(&engine->textures);
     
     const c8 full_path[MAX_PATH_LENGTH] = RESOURCES_DIR;
     strncat((c8*)full_path, file_path, MAX_PATH_LENGTH - strlen(full_path) - 1);
@@ -293,8 +301,7 @@ b8 ce_shader_load_internal(ce_shader* shader) {
 }
 
 ce_shader* ce_shader_load(ce_engine* engine, const char* vertex_path, const char* fragment_path) {
-    engine->ce_shader_count++;
-    ce_shader* new_shader = &engine->shaders[engine->ce_shader_count - 1];
+    ce_shader* new_shader = ce_shaders_increment(&engine->shaders);
     // make path absolute
     char* new_vertex_path = NULL;
     char* new_fragment_path = NULL;
@@ -341,7 +348,7 @@ b8 ce_shader_reload_if_changed(ce_shader* shader) {
 void ce_shader_use(ce_engine* engine, ce_shader* shader, const b8 update_uniforms) {
     glUseProgram(shader->program);
     if (update_uniforms) {
-        ce_uniform_apply(engine, shader);
+        ce_uniform_apply(shader);
     }
 }
 
@@ -354,6 +361,34 @@ void ce_shader_cleanup(ce_shader* shader) {
 
 GLuint ce_shader_get_uniform_location(ce_shader* shader, const char* name) {
     return glGetUniformLocation(shader->program, name);
+}
+
+void ce_shader_set_float(ce_shader* shader, const char* name, f32 value){
+    ce_uniform_set_float(&shader->uniforms, name, value);
+}
+
+void ce_shader_set_vec2(ce_shader* shader, const char* name, const ce_vec2* value){
+    ce_uniform_set_vec2(&shader->uniforms, name, value);
+}
+
+void ce_shader_set_vec3(ce_shader* shader, const char* name, const ce_vec3* value){
+    ce_uniform_set_vec3(&shader->uniforms, name, value);
+}
+
+void ce_shader_set_vec4(ce_shader* shader, const char* name, const ce_vec4* value){
+    ce_uniform_set_vec4(&shader->uniforms, name, value);
+}
+
+void ce_shader_set_int(ce_shader* shader, const char* name, i32 value){
+    ce_uniform_set_int(&shader->uniforms, name, value);
+}
+
+void ce_shader_set_texture(ce_shader* shader, const char* name, GLuint texture){
+    ce_uniform_set_texture(&shader->uniforms, name, texture);
+}
+
+void ce_shader_set_buffer_texture(ce_shader* shader, const char* name, ce_render_buffer* buffer){
+    ce_uniform_set_buffer_texture(&shader->uniforms, name, buffer);
 }
 
 // Mesh functions
@@ -431,23 +466,22 @@ b8 ce_model_load_obj(ce_model* model, const char* path, ce_shader** shaders, con
         fprintf(stderr, "Failed to open OBJ file: %s\n", path);
         return false;
     }
+
     
     // Arrays for temporary storage (shared across all meshes)
-    ce_vec3* temp_vertices = malloc(MAX_VERTICES * sizeof(ce_vec3));
-    ce_vec3* temp_normals = malloc(MAX_VERTICES * sizeof(ce_vec3));
-    ce_vec2* temp_uvs = malloc(MAX_VERTICES * sizeof(ce_vec2));
+    ce_vec3* temp_vertices = malloc(CE_MAX_VERTICES * sizeof(ce_vec3));
+    ce_vec3* temp_normals = malloc(CE_MAX_VERTICES * sizeof(ce_vec3));
+    ce_vec2* temp_uvs = malloc(CE_MAX_VERTICES * sizeof(ce_vec2));
     
     u32 vertex_count = 0;
     u32 normal_count = 0;
     u32 uv_count = 0;
     
     // Dynamic array for meshes
-    ce_mesh* meshes = malloc(MAX_MESHES * sizeof(ce_mesh));
-    u32 ce_mesh_count = 0;
     
     // Current mesh data
-    ce_vertex* current_vertices = malloc(MAX_VERTICES * sizeof(ce_vertex));
-    u32* current_indices = malloc(MAX_INDICES * sizeof(u32));
+    ce_vertex* current_vertices = malloc(CE_MAX_VERTICES * sizeof(ce_vertex));
+    u32* current_indices = malloc(CE_MAX_INDICES * sizeof(u32));
     u32 current_vertex_count = 0;
     u32 current_index_count = 0;
     
@@ -473,9 +507,10 @@ b8 ce_model_load_obj(ce_model* model, const char* path, ce_shader** shaders, con
         } else if (strncmp(line, "o ", 2) == 0 || strncmp(line, "g ", 2) == 0) {
             // New object/group - finalize current mesh if it has faces
             if (hce_faces && current_vertex_count > 0) {
-                finalize_mesh(&meshes[ce_mesh_count], current_vertices, current_indices, 
-                             current_vertex_count, current_index_count, shaders, ce_shader_count, ce_mesh_count);
-                ce_mesh_count++;
+                ce_mesh* new_mesh = ce_meshes_increment(&model->meshes);
+                const sz mesh_count = ce_meshes_get_size(&model->meshes);
+                finalize_mesh(new_mesh, current_vertices, current_indices, 
+                             current_vertex_count, current_index_count, shaders, ce_shader_count, mesh_count - 1);
                 
                 // Reset for next mesh
                 current_vertex_count = 0;
@@ -541,35 +576,30 @@ b8 ce_model_load_obj(ce_model* model, const char* path, ce_shader** shaders, con
     
     // Finalize the last mesh
     if (hce_faces && current_vertex_count > 0) {
-        finalize_mesh(&meshes[ce_mesh_count], current_vertices, current_indices, 
-                     current_vertex_count, current_index_count, shaders, ce_shader_count, ce_mesh_count);
-        ce_mesh_count++;
+        const sz mesh_count = ce_meshes_get_size(&model->meshes);
+        ce_mesh* new_mesh = ce_meshes_increment(&model->meshes);
+        finalize_mesh(new_mesh, current_vertices, current_indices, 
+                     current_vertex_count, current_index_count, shaders, ce_shader_count, mesh_count - 1);
     }
     
     fclose(file);
     
     // If no meshes were created, create a default one
-    if (ce_mesh_count == 0) {
+    if (ce_meshes_get_size(&model->meshes) == 0) {
         fprintf(stderr, "No valid meshes found in OBJ file: %s\n", path);
         free(temp_vertices);
         free(temp_normals);
         free(temp_uvs);
-        free(meshes);
+        ce_meshes_clear(&model->meshes);
         free(current_vertices);
         free(current_indices);
         return false;
     }
     
-    // Set up the model
-    model->ce_mesh_count = ce_mesh_count;
-    model->meshes = malloc(ce_mesh_count * sizeof(ce_mesh));
-    memcpy(model->meshes, meshes, ce_mesh_count * sizeof(ce_mesh));
-    
     // Cleanup temporary arrays
     free(temp_vertices);
     free(temp_normals);
     free(temp_uvs);
-    free(meshes);
     free(current_vertices);
     free(current_indices);
     
@@ -580,7 +610,7 @@ void ce_model_render(ce_engine* engine, ce_model* model) {
     // set up global view/proj once per frame
     ce_mat4 proj = mat4_perspective(  // 45° FOV
         45.0f * (3.14159f/180.0f),
-        engine->window_width / engine->window_height,
+        (f32)engine->window_width / (f32)engine->window_height,
         0.1f, 100.0f
     );
     ce_vec3 cam_pos    = { 0, 0,  5 };
@@ -588,8 +618,8 @@ void ce_model_render(ce_engine* engine, ce_model* model) {
     ce_vec3 cam_up     = { 0, 1,  0 };
     ce_mat4 view = mat4_look_at(cam_pos, cam_target, cam_up);
 
-    for(u32 i = 0; i < model->ce_mesh_count; i++) {
-        ce_mesh* mesh = &model->meshes[i];
+    ce_foreach(ce_meshes, model->meshes, i) {
+        ce_mesh* mesh = ce_meshes_get(&model->meshes, i);
         ce_shader* sh = mesh->shader;
 
         //glUseProgram(sh->program);
@@ -625,35 +655,34 @@ void ce_model_render(ce_engine* engine, ce_model* model) {
 }
 
 void ce_model_cleanup(ce_model* model) {
-    for (u32 i = 0; i < model->ce_mesh_count; i++) {
-        ce_mesh* mesh = &model->meshes[i];
+    ce_foreach(ce_meshes, model->meshes, i) {
+        ce_mesh* mesh = ce_meshes_get(&model->meshes, i);
         glDeleteVertexArrays(1, &mesh->vao);
         glDeleteBuffers(1, &mesh->vbo);
         glDeleteBuffers(1, &mesh->ebo);
         free(mesh->vertices);
         free(mesh->indices);
     }
-    free(model->meshes);
-    model->ce_mesh_count = 0;
+    ce_meshes_clear(&model->meshes);
 }
 
 void ce_model_translate(ce_model* model, const ce_vec3* v){
-    for (u32 i = 0; i < model->ce_mesh_count; i++) {
-        ce_mesh* mesh = &model->meshes[i];
+    ce_foreach(ce_meshes, model->meshes, i) {
+        ce_mesh* mesh = ce_meshes_get(&model->meshes, i);
         ce_mesh_translate(mesh, v);
     }
 }
 
 void ce_model_rotate(ce_model* model, const ce_vec3* v){
-    for (u32 i = 0; i < model->ce_mesh_count; i++) {
-        ce_mesh* mesh = &model->meshes[i];
+    ce_foreach(ce_meshes, model->meshes, i) {
+        ce_mesh* mesh = ce_meshes_get(&model->meshes, i);
         ce_mesh_rotate(mesh, v);
     }  
 }
 
 void ce_model_scale(ce_model* model, const ce_vec3* v){
-    for (u32 i = 0; i < model->ce_mesh_count; i++) {
-        ce_mesh* mesh = &model->meshes[i];
+    ce_foreach(ce_meshes, model->meshes, i) {
+        ce_mesh* mesh = ce_meshes_get(&model->meshes, i);
         ce_mesh_scale(mesh, v);
     }
 }
@@ -752,144 +781,145 @@ void ce_render_buffer_cleanup(ce_render_buffer* buffer) {
 }
 
 // Uniform functions
-void ce_uniform_set_float(ce_engine* engine, const char* name, f32 value) {
-    for (u32 i = 0; i < engine->ce_uniform_count; i++) {
-        if (strcmp(engine->uniforms[i].name, name) == 0) {
-            engine->uniforms[i].type = ce_uniform_FLOAT;
-            engine->uniforms[i].value.f = value;
+void ce_uniform_set_float(ce_uniforms* uniforms, const char* name, f32 value) {
+    ce_foreach(ce_uniforms, *uniforms, i) {
+        ce_uniform* found_uniform = ce_uniforms_get(uniforms, i);
+        if (found_uniform && strcmp(found_uniform->name, name) == 0) {
+            found_uniform->type = CE_UNIFORM_FLOAT;
+            found_uniform->value.f = value;
+            return;
+        }
+        else {
+            ce_uniform* new_uniform = ce_uniforms_increment(uniforms);
+            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+            new_uniform->type = CE_UNIFORM_FLOAT;
+            new_uniform->value.f = value;
             return;
         }
     }
-    
-    if (engine->ce_uniform_count < MAX_UNIFORMS) {
-        ce_uniform* uniform = &engine->uniforms[engine->ce_uniform_count];
-        strncpy(uniform->name, name, sizeof(uniform->name) - 1);
-        uniform->type = ce_uniform_FLOAT;
-        uniform->value.f = value;
-        engine->ce_uniform_count++;
-    }
 }
 
-void ce_uniform_set_vec2(ce_engine* engine, const char* name, ce_vec2 value) {
-    for (u32 i = 0; i < engine->ce_uniform_count; i++) {
-        if (strcmp(engine->uniforms[i].name, name) == 0) {
-            engine->uniforms[i].type = ce_uniform_VEC2;
-            engine->uniforms[i].value.vec2 = value;
+void ce_uniform_set_vec2(ce_uniforms* uniforms, const char* name, const ce_vec2* value) {
+    ce_foreach(ce_uniforms, *uniforms, i) {
+        ce_uniform* found_uniform = ce_uniforms_get(uniforms, i);
+        if (found_uniform && strcmp(found_uniform->name, name) == 0) {
+            found_uniform->type = CE_UNIFORM_VEC2;
+            memcpy(&found_uniform->value.vec2, value, sizeof(ce_vec2));
+            return;
+        }
+        else {
+            ce_uniform* new_uniform = ce_uniforms_increment(uniforms);
+            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+            new_uniform->type = CE_UNIFORM_VEC2;
+            memcpy(&new_uniform->value.vec2, value, sizeof(ce_vec2));
             return;
         }
     }
-    
-    if (engine->ce_uniform_count < MAX_UNIFORMS) {
-        ce_uniform* uniform = &engine->uniforms[engine->ce_uniform_count];
-        strncpy(uniform->name, name, sizeof(uniform->name) - 1);
-        uniform->type = ce_uniform_VEC2;
-        uniform->value.vec2 = value;
-        engine->ce_uniform_count++;
-    }
 }
 
-void ce_uniform_set_vec3(ce_engine* engine, const char* name, ce_vec3 value) {
-    for (u32 i = 0; i < engine->ce_uniform_count; i++) {
-        if (strcmp(engine->uniforms[i].name, name) == 0) {
-            engine->uniforms[i].type = ce_uniform_VEC3;
-            engine->uniforms[i].value.vec3 = value;
+void ce_uniform_set_vec3(ce_uniforms* uniforms, const char* name, const ce_vec3* value) {
+    ce_foreach(ce_uniforms, *uniforms, i) {
+        ce_uniform* found_uniform = ce_uniforms_get(uniforms, i);
+        if (found_uniform && strcmp(found_uniform->name, name) == 0) {
+            found_uniform->type = CE_UNIFORM_VEC3;
+            memcpy(&found_uniform->value.vec3, value, sizeof(ce_vec3));
+            return;
+        }
+        else {
+            ce_uniform* new_uniform = ce_uniforms_increment(uniforms);
+            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+            new_uniform->type = CE_UNIFORM_VEC3;
+            memcpy(&new_uniform->value.vec3, value, sizeof(ce_vec3));
             return;
         }
     }
-    
-    if (engine->ce_uniform_count < MAX_UNIFORMS) {
-        ce_uniform* uniform = &engine->uniforms[engine->ce_uniform_count];
-        strncpy(uniform->name, name, sizeof(uniform->name) - 1);
-        uniform->type = ce_uniform_VEC3;
-        uniform->value.vec3 = value;
-        engine->ce_uniform_count++;
-    }
 }
 
-void ce_uniform_set_vec4(ce_engine* engine, const char* name, ce_vec4 value) {
-    for (u32 i = 0; i < engine->ce_uniform_count; i++) {
-        if (strcmp(engine->uniforms[i].name, name) == 0) {
-            engine->uniforms[i].type = ce_uniform_VEC4;
-            engine->uniforms[i].value.vec4 = value;
+void ce_uniform_set_vec4(ce_uniforms* uniforms, const char* name, const ce_vec4* value) {
+    ce_foreach(ce_uniforms, *uniforms, i) {
+        ce_uniform* found_uniform = ce_uniforms_get(uniforms, i);
+        if (found_uniform && strcmp(found_uniform->name, name) == 0) {
+            found_uniform->type = CE_UNIFORM_VEC4;
+            memcpy(&found_uniform->value.vec4, value, sizeof(ce_vec4));
+            return;
+        }
+        else {
+            ce_uniform* new_uniform = ce_uniforms_increment(uniforms);
+            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+            new_uniform->type = CE_UNIFORM_VEC4;
+            memcpy(&new_uniform->value.vec4, value, sizeof(ce_vec4));
             return;
         }
     }
-    
-    if (engine->ce_uniform_count < MAX_UNIFORMS) {
-        ce_uniform* uniform = &engine->uniforms[engine->ce_uniform_count];
-        strncpy(uniform->name, name, sizeof(uniform->name) - 1);
-        uniform->type = ce_uniform_VEC4;
-        uniform->value.vec4 = value;
-        engine->ce_uniform_count++;
-    }
-}
+}           
 
-void ce_uniform_set_int(ce_engine* engine, const char* name, i32 value) {
-    for (u32 i = 0; i < engine->ce_uniform_count; i++) {
-        if (strcmp(engine->uniforms[i].name, name) == 0) {
-            engine->uniforms[i].type = ce_uniform_INT;
-            engine->uniforms[i].value.i = value;
+void ce_uniform_set_int(ce_uniforms* uniforms, const char* name, i32 value) {
+    ce_foreach(ce_uniforms, *uniforms, i) {
+        ce_uniform* found_uniform = ce_uniforms_get(uniforms, i);
+        if (found_uniform && strcmp(found_uniform->name, name) == 0) {
+            found_uniform->type = CE_UNIFORM_INT;
+            found_uniform->value.i = value;
+            return;
+        }
+        else {
+            ce_uniform* new_uniform = ce_uniforms_increment(uniforms);
+            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+            new_uniform->type = CE_UNIFORM_INT;
+            new_uniform->value.i = value;
             return;
         }
     }
-    
-    if (engine->ce_uniform_count < MAX_UNIFORMS) {
-        ce_uniform* uniform = &engine->uniforms[engine->ce_uniform_count];
-        strncpy(uniform->name, name, sizeof(uniform->name) - 1);
-        uniform->type = ce_uniform_INT;
-        uniform->value.i = value;
-        engine->ce_uniform_count++;
-    }
 }
 
-void ce_uniform_set_texture(ce_engine* engine, const char* name, GLuint texture) {
-    for (u32 i = 0; i < engine->ce_uniform_count; i++) {
-        if (strcmp(engine->uniforms[i].name, name) == 0) {
-            engine->uniforms[i].type = ce_uniform_TEXTURE;
-            engine->uniforms[i].value.texture = texture;
+void ce_uniform_set_texture(ce_uniforms* uniforms, const char* name, GLuint texture) {
+    ce_foreach(ce_uniforms, *uniforms, i) {
+        ce_uniform* found_uniform = ce_uniforms_get(uniforms, i);
+        if (found_uniform && strcmp(found_uniform->name, name) == 0) {
+            found_uniform->type = CE_UNIFORM_TEXTURE;
+            found_uniform->value.texture = texture;
+            return;
+            
+        }
+        else {
+            ce_uniform* new_uniform = ce_uniforms_increment(uniforms);
+            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+            new_uniform->type = CE_UNIFORM_TEXTURE;
+            new_uniform->value.texture = texture;
             return;
         }
     }
-    
-    if (engine->ce_uniform_count < MAX_UNIFORMS) {
-        ce_uniform* uniform = &engine->uniforms[engine->ce_uniform_count];
-        strncpy(uniform->name, name, sizeof(uniform->name) - 1);
-        uniform->type = ce_uniform_TEXTURE;
-        uniform->value.texture = texture;
-        engine->ce_uniform_count++;
-    }
 }
 
-void ce_uniform_set_buffer_texture(ce_engine* engine, const char* name, ce_render_buffer* buffer) {
-    ce_uniform_set_texture(engine, name, buffer->texture);
+void ce_uniform_set_buffer_texture(ce_uniforms* uniforms, const char* name, ce_render_buffer* buffer) {
+    ce_uniform_set_texture(uniforms, name, buffer->texture);
 }
 
-void ce_uniform_apply(ce_engine* engine, ce_shader* shader) {
+void ce_uniform_apply(ce_shader* shader) {
     glUseProgram(shader->program);
     u32 texture_unit = 0;
-    for (u32 i = 0; i < engine->ce_uniform_count; i++) {
-        ce_uniform* uniform = &engine->uniforms[i];
+    ce_foreach(ce_uniforms, shader->uniforms, i) {
+        ce_uniform* uniform = ce_uniforms_get(&shader->uniforms, i);
         GLint location = glGetUniformLocation(shader->program, uniform->name); 
         if (location == -1) {
             continue;
         };
         switch (uniform->type) {
-            case ce_uniform_FLOAT:
+            case CE_UNIFORM_FLOAT:
                 glUniform1fv(location, 1, &uniform->value.f);
                 break;
-            case ce_uniform_VEC2:
+            case CE_UNIFORM_VEC2:
                 glUniform2fv(location, 1, &uniform->value.vec2.x);
                 break;
-            case ce_uniform_VEC3:
+            case CE_UNIFORM_VEC3:
                 glUniform3fv(location, 1, &uniform->value.vec3.x);
                 break;
-            case ce_uniform_VEC4:
+            case CE_UNIFORM_VEC4:
                 glUniform4fv(location, 1, &uniform->value.vec4.x);
                 break;
-            case ce_uniform_INT:
+            case CE_UNIFORM_INT:
                 glUniform1i(location, uniform->value.i);
                 break;
-            case ce_uniform_TEXTURE:
+            case CE_UNIFORM_TEXTURE:
                 glActiveTexture(GL_TEXTURE0 + texture_unit);
                 glBindTexture(GL_TEXTURE_2D, uniform->value.texture);
                 glUniform1i(location, texture_unit);

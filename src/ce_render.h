@@ -4,6 +4,7 @@
 #define CE_RENDER_H
 
 #include "ce_math.h"
+#include "ce_array.h"
 #include <GLFW/glfw3.h>
 #include <time.h>
 #include <assert.h>
@@ -11,14 +12,16 @@
 
 #define PI 3.14159265359
 
-#define MAX_BUFFERS 8
-#define MAX_UNIFORMS 32
-#define MAX_TEXTURES 128
-#define MAX_SHADERS 64
-#define MAX_MESHES 64
-#define MAX_VERTICES 65536
-#define MAX_INDICES 65536
-#define MAX_PATH_LENGTH 256
+#define CE_MAX_RENDER_BUFFERS 16 
+#define CE_MAX_UNIFORMS 32
+#define CE_MAX_TEXTURES 128
+#define CE_MAX_SHADERS 64
+#define CE_MAX_MESHES 64
+#define CE_MAX_MODELS 1024
+#define CE_MAX_VERTICES 65536
+#define CE_MAX_INDICES 65536
+#define CE_MAX_NAME_LENGTH 64
+#define CE_MAX_PATH_LENGTH 256
 
 typedef struct {
     ce_vec3 position;
@@ -26,24 +29,50 @@ typedef struct {
     ce_vec2 uv;
 } ce_vertex;
 
+typedef enum {
+    CE_UNIFORM_FLOAT,
+    CE_UNIFORM_VEC2,
+    CE_UNIFORM_VEC3,
+    CE_UNIFORM_VEC4,
+    CE_UNIFORM_INT,
+    CE_UNIFORM_TEXTURE
+} ce_uniform_type;
+
+typedef struct {
+    char name[CE_MAX_NAME_LENGTH];
+    ce_uniform_type type;
+    union {
+        f32 f;
+        ce_vec2 vec2;
+        ce_vec3 vec3;
+        ce_vec4 vec4;
+        i32 i;
+        GLuint texture;
+    } value;
+} ce_uniform;
+CE_DEFINE_ARRAY(ce_uniform, ce_uniforms, CE_MAX_UNIFORMS);
+
 typedef struct {
     GLuint program;
     GLuint vertex_shader;
     GLuint fragment_shader;
-    c8 vertex_path[MAX_PATH_LENGTH];
-    c8 fragment_path[MAX_PATH_LENGTH];
+    c8 vertex_path[CE_MAX_PATH_LENGTH];
+    c8 fragment_path[CE_MAX_PATH_LENGTH];
     time_t vertex_mtime;
     time_t fragment_mtime;
+    ce_uniforms uniforms;
     b8 needs_reload;
 } ce_shader;
+CE_DEFINE_ARRAY(ce_shader, ce_shaders, CE_MAX_SHADERS);
 
 typedef struct ce_texture {
-    char path[MAX_PATH_LENGTH];
+    char path[CE_MAX_PATH_LENGTH];
     GLuint id;
     i32 width;
     i32 height;
     i32 channels;
 } ce_texture;
+CE_DEFINE_ARRAY(ce_texture, ce_textures, CE_MAX_TEXTURES);
 
 typedef struct {
     ce_vertex* vertices;
@@ -56,33 +85,11 @@ typedef struct {
     ce_shader* shader;
     ce_mat4 matrix;  
 } ce_mesh;
+CE_DEFINE_ARRAY(ce_mesh, ce_meshes, CE_MAX_MESHES);
 
 typedef struct {
-    ce_mesh* meshes;
-    u32 ce_mesh_count;
+    ce_meshes meshes;
 } ce_model;
-
-typedef enum {
-    ce_uniform_FLOAT,
-    ce_uniform_VEC2,
-    ce_uniform_VEC3,
-    ce_uniform_VEC4,
-    ce_uniform_INT,
-    ce_uniform_TEXTURE
-} ce_uniform_type;
-
-typedef struct {
-    char name[64];
-    ce_uniform_type type;
-    union {
-        f32 f;
-        ce_vec2 vec2;
-        ce_vec3 vec3;
-        ce_vec4 vec4;
-        i32 i;
-        GLuint texture;
-    } value;
-} ce_uniform;
 
 typedef struct {
     GLuint framebuffer;
@@ -93,27 +100,21 @@ typedef struct {
     u32 width;
     u32 height;
 } ce_render_buffer;
+CE_DEFINE_ARRAY(ce_render_buffer, ce_render_buffers, CE_MAX_RENDER_BUFFERS);
 
 typedef struct {
     GLFWwindow* window;
     u32 window_width;
     u32 window_height;
-    
-    ce_render_buffer buffers[MAX_BUFFERS];
-    u32 buffer_count;
+  
+    ce_render_buffers render_buffers;
+    ce_textures textures;
+    ce_shaders shaders;
+    ce_uniforms global_uniforms;
 
-    ce_texture textures[MAX_TEXTURES];
-    u32 texture_count;
-    
-    ce_shader shaders[MAX_SHADERS];
-    u32 ce_shader_count;
-    
     ce_model* models;
     u32 ce_model_count;
-    
-    ce_uniform uniforms[MAX_UNIFORMS];
-    u32 ce_uniform_count;
-    
+   
     f64 time;
     f64 delta_time;
     f64 last_frame_time;
@@ -142,6 +143,7 @@ extern void ce_engine_check_exit_keys(ce_engine* engine, i32* keys, i32 key_coun
 extern b8 ce_engine_is_key_down(ce_engine* engine, i32 key);
 extern void ce_enigne_set_fps(const f64 fps);
 extern void ce_engine_sleep(const f64 seconds);
+extern ce_uniforms* ce_engine_get_global_uniforms(ce_engine* engine);
 
 // Texture functions
 typedef enum { CE_REPEAT, CE_CLAMP } ce_texture_wrap;
@@ -154,6 +156,13 @@ extern b8 ce_shader_reload_if_changed(ce_shader* shader);
 extern void ce_shader_use(ce_engine* engine, ce_shader* shader, const b8 update_uniforms);
 extern void ce_shader_cleanup(ce_shader* shader);
 extern GLuint ce_shader_get_uniform_location(ce_shader* shader, const char* name);
+extern void ce_shader_set_float(ce_shader* shader, const char* name, f32 value);
+extern void ce_shader_set_vec2(ce_shader* shader, const char* name, const ce_vec2* value);
+extern void ce_shader_set_vec3(ce_shader* shader, const char* name, const ce_vec3* value);
+extern void ce_shader_set_vec4(ce_shader* shader, const char* name, const ce_vec4* value);
+extern void ce_shader_set_int(ce_shader* shader, const char* name, i32 value);
+extern void ce_shader_set_texture(ce_shader* shader, const char* name, GLuint texture);
+extern void ce_shader_set_buffer_texture(ce_shader* shader, const char* name, ce_render_buffer* buffer);
 
 // Mesh functions
 extern void ce_mesh_translate(ce_mesh* mesh, const ce_vec3* v);
@@ -175,14 +184,14 @@ extern void ce_render_buffer_unbind(ce_render_buffer* buf);
 extern void ce_render_buffer_cleanup(ce_render_buffer* buffer);
 
 // Uniform functions
-extern void ce_uniform_set_float(ce_engine* engine, const char* name, f32 value);
-extern void ce_uniform_set_vec2(ce_engine* engine, const char* name, ce_vec2 value);
-extern void ce_uniform_set_vec3(ce_engine* engine, const char* name, ce_vec3 value);
-extern void ce_uniform_set_vec4(ce_engine* engine, const char* name, ce_vec4 value);
-extern void ce_uniform_set_int(ce_engine* engine, const char* name, i32 value);
-extern void ce_uniform_set_texture(ce_engine* engine, const char* name, GLuint texture);
-extern void ce_uniform_set_buffer_texture(ce_engine* engine, const char* name, ce_render_buffer* buffer);
-extern void ce_uniform_apply(ce_engine* engine, ce_shader* shader); // make sure the shader is in use
+extern void ce_uniform_set_float    (ce_uniforms* uniforms, const char* name, f32 value);
+extern void ce_uniform_set_vec2     (ce_uniforms* uniforms, const char* name, const ce_vec2* value);
+extern void ce_uniform_set_vec3     (ce_uniforms* uniforms, const char* name, const ce_vec3* value);
+extern void ce_uniform_set_vec4     (ce_uniforms* uniforms, const char* name, const ce_vec4* value);
+extern void ce_uniform_set_int      (ce_uniforms* uniforms, const char* name, i32 value);
+extern void ce_uniform_set_texture  (ce_uniforms* uniforms, const char* name, GLuint texture);
+extern void ce_uniform_set_buffer_texture(ce_uniforms* uniforms, const char* name, ce_render_buffer* buffer);
+extern void ce_uniform_apply(ce_shader* shader);
 
 // Utility functions
 extern f64 get_time(void);

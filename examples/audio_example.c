@@ -45,9 +45,11 @@ i32 main() {
         ce_engine_check_exit_keys(&engine, keys, sizeof(keys) / sizeof(i32));
 
         ce_engine_update(&engine);
-        
-        ce_uniform_set_vec3(&engine, "amps", ce_audio_input_get_amplitudes());
-        ce_uniform_set_texture(&engine, "perlin_256", perlin_256->id);
+       
+        ce_uniforms* global_uniforms = ce_engine_get_global_uniforms(&engine);
+        const ce_vec3 amps = ce_audio_input_get_amplitudes();
+        ce_uniform_set_vec3(global_uniforms, "amps", &amps);
+        ce_uniform_set_texture(global_uniforms, "perlin_256", perlin_256->id);
         
         // render buffer 1
         ce_render_buffer_bind(&buffer1);
@@ -55,7 +57,7 @@ i32 main() {
         ce_shader_use(&engine, buffer1_shader, true);
         ce_engine_render_quad(&engine);
         ce_render_buffer_unbind(&buffer1);
-        ce_uniform_set_texture(&engine, "buffer1", buffer1.texture);
+        ce_uniform_set_texture(global_uniforms, "buffer1", buffer1.texture);
 
         // render model
         ce_render_buffer_bind(&model_buf);
@@ -68,16 +70,16 @@ i32 main() {
         // render post process
         ce_render_buffer_bind(&post_process_buf);
         ce_engine_clear();
-        ce_uniform_set_texture(&engine, "model", model_buf.texture);
-        ce_uniform_set_texture(&engine, "perlin_noise", perlin_256->id);
-        ce_uniform_set_texture(&engine, "previous_pp_frame", post_process_buf.prev_texture);
+        ce_shader_set_texture(post_process_shader, "model", model_buf.texture);
+        ce_shader_set_texture(post_process_shader, "perlin_noise", perlin_256->id);
+        ce_shader_set_texture(post_process_shader, "previous_pp_frame", post_process_buf.prev_texture);
         ce_shader_use(&engine, post_process_shader, true);
         ce_engine_render_quad(&engine);
         ce_render_buffer_unbind(&post_process_buf);
 
         // render main shader (screen)
         ce_shader_use(&engine, main_shader, true);
-        ce_uniform_set_texture(&engine, "final_frame", post_process_buf.texture);
+        ce_uniform_set_texture(global_uniforms, "final_frame", post_process_buf.texture);
         ce_engine_render(&engine);
         ce_engine_swap_buffers(&engine);
         // Print some debug info occasionally

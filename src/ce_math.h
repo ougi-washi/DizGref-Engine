@@ -5,12 +5,13 @@
 
 #include "ce_types.h"
 
-
 typedef struct { f32 m[16]; } ce_mat4;
 typedef struct { f32 x, y, z; } ce_vec3;
 typedef struct { f32 x, y, z, w; } ce_vec4;
 typedef struct { f32 x, y; } ce_vec2;
 
+#define ce_vec(_type, ...) ( _type ) { __VA_ARGS__ }
+#define ce_vec_ptr(_type, ...) &( _type ) { __VA_ARGS__ }
 
 static ce_mat4 mat4_identity(void) {
     ce_mat4 I = { {
