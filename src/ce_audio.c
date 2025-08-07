@@ -16,8 +16,8 @@ typedef struct {
     float* buffer;
     PaStream* stream;
     int buffer_size;
-} ce_audio_data_t;
-static ce_audio_data_t ce_audio_data = {0};
+} ce_audio_input_data_t;
+static ce_audio_input_data_t ce_audio_input_data = {0};
 
 // Simple zero-crossing frequency detection
 float detect_frequency(float* buffer, int size, float sample_rate) {
@@ -60,13 +60,13 @@ void classify_frequency_bands(float frequency, float volume, float* low, float* 
 
 
 // Audio callback function
-static int ce_audio_callback(const void* input_buffer, void* output_buffer,
+static int ce_audio_input_callback(const void* input_buffer, void* output_buffer,
                          unsigned long frames_per_buffer,
                          const PaStreamCallbackTimeInfo* time_info,
                          PaStreamCallbackFlags status_flags,
                          void* user_data) {
     
-    ce_audio_data_t* data = (ce_audio_data_t*)user_data;
+    ce_audio_input_data_t* data = (ce_audio_input_data_t*)user_data;
     const float* input = (const float*)input_buffer;
     
     if (input_buffer == NULL) {
@@ -116,7 +116,7 @@ void list_audio_devices() {
     }
 }
 
-void ce_audio_init() {
+void ce_audio_input_init() {
     list_audio_devices();
     PaStreamParameters input_parameters;
     PaError err;
@@ -124,23 +124,23 @@ void ce_audio_init() {
     err = Pa_Initialize();
     if (err != paNoError) {
         printf("PortAudio error: %s\n", Pa_GetErrorText(err));
-        ce_audio_cleanup();
+        ce_audio_input_cleanup();
         return;
     }
     
-    ce_audio_data.buffer = (float*)malloc(FRAMES_PER_BUFFER * sizeof(float));
-    ce_audio_data.buffer_size = FRAMES_PER_BUFFER;
+    ce_audio_input_data.buffer = (float*)malloc(FRAMES_PER_BUFFER * sizeof(float));
+    ce_audio_input_data.buffer_size = FRAMES_PER_BUFFER;
     
-    if (!ce_audio_data.buffer) {
+    if (!ce_audio_input_data.buffer) {
         printf("Memory allocation failed\n");
-        ce_audio_cleanup();
+        ce_audio_input_cleanup();
         return;
     }
     
     int input_device = Pa_GetDefaultInputDevice();
     if (input_device == paNoDevice) {
         printf("No input device found\n");
-        ce_audio_cleanup();
+        ce_audio_input_cleanup();
         return;
     }
     
@@ -149,54 +149,54 @@ void ce_audio_init() {
     input_parameters.sampleFormat = paFloat32;
     input_parameters.suggestedLatency = Pa_GetDeviceInfo(input_device)->defaultLowInputLatency;
     input_parameters.hostApiSpecificStreamInfo = NULL;
-    err = Pa_OpenStream(&ce_audio_data.stream,
+    err = Pa_OpenStream(&ce_audio_input_data.stream,
                         &input_parameters,
                         NULL,
                         SAMPLE_RATE,
                         FRAMES_PER_BUFFER,
                         paClipOff,
-                        ce_audio_callback,
-                        &ce_audio_data);
+                        ce_audio_input_callback,
+                        &ce_audio_input_data);
     
     if (err != paNoError) {
         printf("Cannot open stream: %s\n", Pa_GetErrorText(err));
-        ce_audio_cleanup();
+        ce_audio_input_cleanup();
         return;
     }
     
-    err = Pa_StartStream(ce_audio_data.stream);
+    err = Pa_StartStream(ce_audio_input_data.stream);
     if (err != paNoError) {
         printf("Cannot start stream: %s\n", Pa_GetErrorText(err));
-        Pa_CloseStream(ce_audio_data.stream);
-        ce_audio_cleanup();
+        Pa_CloseStream(ce_audio_input_data.stream);
+        ce_audio_input_cleanup();
         return;
     }
     
     printf("Volume and frequency detection active...\n\n");
-    ce_audio_data.running = true;
+    ce_audio_input_data.running = true;
 }
 
-void ce_audio_cleanup(){
-    ce_audio_data.running = false;
+void ce_audio_input_cleanup(){
+    ce_audio_input_data.running = false;
     PaError err;
-    err = Pa_StopStream(ce_audio_data.stream);
+    err = Pa_StopStream(ce_audio_input_data.stream);
     if (err != paNoError) {
         printf("PortAudio error: %s\n", Pa_GetErrorText(err));
         goto cleanup;
     }
 
-    err = Pa_CloseStream(ce_audio_data.stream);
+    err = Pa_CloseStream(ce_audio_input_data.stream);
     if (err != paNoError) {
         printf("PortAudio error: %s\n", Pa_GetErrorText(err));
     }
 
 cleanup:
-    free(ce_audio_data.buffer);
+    free(ce_audio_input_data.buffer);
     Pa_Terminate();
 }
 
 
-ce_vec3 ce_audio_get_amplitudes(){
-    return ce_audio_data.amps;
+ce_vec3 ce_audio_input_get_amplitudes(){
+    return ce_audio_input_data.amps;
 }
 
