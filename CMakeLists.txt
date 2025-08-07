@@ -3,7 +3,7 @@
 ## General
 cmake_minimum_required(VERSION 3.22.1)
 
-project(Syphax_ENGINE LANGUAGES C CXX)
+project(SYPHAX_ENGINE LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 
 if(NOT CMAKE_GENERATOR)
