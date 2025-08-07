@@ -348,7 +348,7 @@ b8 ce_shader_reload_if_changed(ce_shader* shader) {
 void ce_shader_use(ce_engine* engine, ce_shader* shader, const b8 update_uniforms) {
     glUseProgram(shader->program);
     if (update_uniforms) {
-        ce_uniform_apply(shader);
+        ce_uniform_apply(engine, shader);
     }
 }
 
@@ -894,11 +894,44 @@ void ce_uniform_set_buffer_texture(ce_uniforms* uniforms, const char* name, ce_r
     ce_uniform_set_texture(uniforms, name, buffer->texture);
 }
 
-void ce_uniform_apply(ce_shader* shader) {
+void ce_uniform_apply(ce_engine* engine, ce_shader* shader) {
     glUseProgram(shader->program);
     u32 texture_unit = 0;
     ce_foreach(ce_uniforms, shader->uniforms, i) {
         ce_uniform* uniform = ce_uniforms_get(&shader->uniforms, i);
+        GLint location = glGetUniformLocation(shader->program, uniform->name); 
+        if (location == -1) {
+            continue;
+        };
+        switch (uniform->type) {
+            case CE_UNIFORM_FLOAT:
+                glUniform1fv(location, 1, &uniform->value.f);
+                break;
+            case CE_UNIFORM_VEC2:
+                glUniform2fv(location, 1, &uniform->value.vec2.x);
+                break;
+            case CE_UNIFORM_VEC3:
+                glUniform3fv(location, 1, &uniform->value.vec3.x);
+                break;
+            case CE_UNIFORM_VEC4:
+                glUniform4fv(location, 1, &uniform->value.vec4.x);
+                break;
+            case CE_UNIFORM_INT:
+                glUniform1i(location, uniform->value.i);
+                break;
+            case CE_UNIFORM_TEXTURE:
+                glActiveTexture(GL_TEXTURE0 + texture_unit);
+                glBindTexture(GL_TEXTURE_2D, uniform->value.texture);
+                glUniform1i(location, texture_unit);
+                texture_unit++;
+                break;
+        }
+    }
+    
+    // apply global uniforms
+    ce_uniforms* global_uniforms = ce_engine_get_global_uniforms(engine);
+    ce_foreach(ce_uniforms, *global_uniforms, i) {
+        ce_uniform* uniform = ce_uniforms_get(global_uniforms, i);
         GLint location = glGetUniformLocation(shader->program, uniform->name); 
         if (location == -1) {
             continue;

@@ -191,7 +191,7 @@ extern void ce_uniform_set_vec4     (ce_uniforms* uniforms, const char* name, co
 extern void ce_uniform_set_int      (ce_uniforms* uniforms, const char* name, i32 value);
 extern void ce_uniform_set_texture  (ce_uniforms* uniforms, const char* name, GLuint texture);
 extern void ce_uniform_set_buffer_texture(ce_uniforms* uniforms, const char* name, ce_render_buffer* buffer);
-extern void ce_uniform_apply(ce_shader* shader);
+extern void ce_uniform_apply(ce_engine* engine, ce_shader* shader);
 
 // Utility functions
 extern f64 get_time(void);
