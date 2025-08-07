@@ -1,4 +1,4 @@
-## Capsian Engine
+## Syphax Engine
 Simple, fast, and lightweight 2D/3D engine in C.
 
 ### Features
