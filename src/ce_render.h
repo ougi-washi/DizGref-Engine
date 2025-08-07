@@ -31,8 +31,8 @@ typedef struct {
     GLuint program;
     GLuint vertex_shader;
     GLuint fragment_shader;
-    char vertex_path[MAX_PATH_LENGTH];
-    char fragment_path[MAX_PATH_LENGTH];
+    c8 vertex_path[MAX_PATH_LENGTH];
+    c8 fragment_path[MAX_PATH_LENGTH];
     time_t vertex_mtime;
     time_t fragment_mtime;
     b8 needs_reload;

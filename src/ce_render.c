@@ -1,10 +1,10 @@
 // Capsian-Engine - Ougi Washi
 
 #include "ce_render.h"
+#include "ce_gl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
