@@ -13,7 +13,7 @@ i32 main() {
     
     // engine setup
     ce_engine engine = {0};
-    ce_engine_init(&engine, WIDTH, HEIGHT, "Abstract Shader Engine");
+    ce_engine_init(&engine, WIDTH, HEIGHT, "Capsian Engine");
    
     ce_shader* main_shader = ce_shader_load(&engine, "vert.glsl", "frag_main.glsl");
 
