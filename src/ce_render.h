@@ -3,7 +3,6 @@
 #ifndef CE_RENDER_H
 #define CE_RENDER_H
 
-#include "ce_gl.h"
 #include "ce_math.h"
 #include <GLFW/glfw3.h>
 #include <time.h>
