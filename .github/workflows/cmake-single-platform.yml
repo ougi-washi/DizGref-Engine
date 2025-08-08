@@ -29,8 +29,7 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      working-directory: ${{github.workspace}}
-      run: build.sh
+      run: ${{github.workspace}}/build.sh
       # run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: Test
