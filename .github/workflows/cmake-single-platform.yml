@@ -24,8 +24,10 @@ jobs:
 
     - name: Update APT
       run: sudo apt-get update
+
     - name: Install dependencies
-      run: sudo apt-get install -y \
+      run: |
+            sudo apt-get install -y \
             cmake \
             ninja-build \
             build-essential \
