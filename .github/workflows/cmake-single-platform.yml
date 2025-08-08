@@ -29,23 +29,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-            sudo apt-get install -y \
-            cmake \
-            ninja-build \
-            build-essential \
-            pkg-config \
-            libgl1-mesa-dev \
-            libglu1-mesa-dev \
-            libx11-dev \
-            libxrandr-dev \
-            libxinerama-dev \
-            libxcursor-dev \
-            libxi-dev \
-            libpulse-dev \
-            libasound-dev \
-            portaudio19-dev \
-            libportaudio2 \
-            libportaudiocpp0 \
+            sudo apt-get install -y cmake build-essential pkg-config
+            sudo apt-get install -y libwayland-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxkbcommon-dev
+            sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+            sudo apt-get install -y libpulse-dev libasound-dev portaudio19-dev libportaudio2 libportaudiocpp0
             
     #- name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
