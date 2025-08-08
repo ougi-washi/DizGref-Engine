@@ -5,6 +5,7 @@
 
 #include "se_math.h"
 #include "se_array.h"
+#include "se_window.h"
 #include <GLFW/glfw3.h>
 #include <time.h>
 #include <assert.h>
@@ -103,10 +104,13 @@ typedef struct {
 SE_DEFINE_ARRAY(se_render_buffer, se_render_buffers, SE_MAX_RENDER_BUFFERS);
 
 typedef struct {
-    GLFWwindow* window;
-    u32 window_width;
-    u32 window_height;
-  
+    f64 current;
+    f64 delta;
+    f64 last_frame;
+} se_time;
+
+typedef struct {
+
     se_render_buffers render_buffers;
     se_textures textures;
     se_shaders shaders;
@@ -114,19 +118,9 @@ typedef struct {
 
     se_model* models;
     u32 se_model_count;
-   
-    f64 time;
-    f64 delta_time;
-    f64 last_frame_time;
+  
+    se_time time;
     i32 frame_count;
-    
-    b8 keys[1024];
-    f64 mouse_x, mouse_y;
-    f64 mouse_dx, mouse_dy;
-    b8 mouse_buttons[8];
-    
-    GLuint quad_vao;
-    GLuint quad_vbo;
 } se_engine;
 
 // Engine functions

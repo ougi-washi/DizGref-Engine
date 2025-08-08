@@ -24,9 +24,7 @@ static const char* quad_vertex_shader =
 "   gl_Position = vec4(aPos, 0.0, 1.0);\n"
 "}\n";
 
-
 static f64 se_target_fps = 60.0;
-
 
 // Forward declarations
 static void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
@@ -40,49 +38,6 @@ static GLuint create_shader_program(const char* vertex_source, const char* fragm
 b8 se_engine_init(se_engine* engine, u32 width, u32 height, const char* title) {
     memset(engine, 0, sizeof(se_engine));
     
-    // Initialize GLFW
-    if (!glfwInit()) {
-        fprintf(stderr, "Failed to initialize GLFW\n");
-        return false;
-    }
-    
-    // Set OpenGL version
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwSwapInterval(1);
-    
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-    
-    // Create window
-    engine->window = glfwCreateWindow(width, height, title, NULL, NULL);
-    if (!engine->window) {
-        fprintf(stderr, "Failed to create GLFW window\n");
-        glfwTerminate();
-        return false;
-    }
-
-    engine->window_width = width;
-    engine->window_height = height;
-    
-    glfwMakeContextCurrent(engine->window);
-    glfwSetWindowUserPointer(engine->window, engine);
-    
-    // Set callbacks
-    glfwSetKeyCallback(engine->window, key_callback);
-    glfwSetCursorPosCallback(engine->window, mouse_callback);
-    glfwSetMouseButtonCallback(engine->window, mouse_button_callback);
-    glfwSetFramebufferSizeCallback(engine->window, framebuffer_size_callback);
-    
-    se_init_opengl();
-    // Enable depth testing
-    glEnable(GL_DEPTH_TEST);
-    
-    // Create fullscreen quad
-    create_fullscreen_quad(&engine->quad_vao, &engine->quad_vbo);
-
     // Initialize timing
     engine->last_frame_time = get_time();
     
@@ -113,26 +68,15 @@ void se_engine_cleanup(se_engine* engine) {
         se_render_buffer* curr_buffer = se_render_buffers_get(&engine->render_buffers, i);
         se_render_buffer_cleanup(curr_buffer);
     }
-
     
-    // Cleanup quad
-    glDeleteVertexArrays(1, &engine->quad_vao);
-    glDeleteBuffers(1, &engine->quad_vbo);
-    
-    // Cleanup GLFW
-    glfwDestroyWindow(engine->window);
-    glfwTerminate();
-}
-
-b8 se_engine_should_close(se_engine* engine) {
-    return glfwWindowShouldClose(engine->window);
+    se_window_destroy_all();
 }
 
 void se_engine_update(se_engine* engine) {
     double current_time = get_time();
-    engine->delta_time = current_time - engine->last_frame_time;
-    engine->last_frame_time = current_time;
-    engine->time = current_time;
+    engine->time.delta = current_time - engine->time.last_frame;
+    engine->time.last_frame = current_time;
+    engine->time.current = current_time;
     engine->frame_count++;
     
     // Check for shader reloads
@@ -142,53 +86,14 @@ void se_engine_update(se_engine* engine) {
     
     // Update built-in uniforms
     se_uniforms* global_uniforms = &engine->global_uniforms;
-    se_uniform_set_float(global_uniforms, "time", engine->time);
-    se_uniform_set_float(global_uniforms, "delta_time", engine->delta_time);
+    se_uniform_set_float(global_uniforms, "time", engine->time.current);
+    se_uniform_set_float(global_uniforms, "delta_time", engine->time.delta);
     se_uniform_set_int(global_uniforms, "frame", engine->frame_count);
-    se_uniform_set_vec2(global_uniforms, "resolution", se_vec_ptr(se_vec2, engine->window_width, engine->window_height));
-    se_uniform_set_vec2(global_uniforms, "mouse", se_vec_ptr(se_vec2, engine->mouse_x, engine->mouse_y));
-}
-
-void se_engine_render_quad(se_engine* engine) {
-    glBindVertexArray(engine->quad_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
-}
-
-void se_engine_render(se_engine* engine) {
-    glViewport(0, 0, engine->window_width, engine->window_height);
-    se_engine_clear(); 
-    se_engine_render_quad(engine);
-}
-
-void se_engine_clear(){
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-void se_engine_swap_buffers(se_engine* engine) {
-    // 60fps
-    f64 time_left = 1 / se_target_fps - engine->delta_time;
-    if (time_left > 0) {
-        se_engine_sleep(time_left);
-    }
     
-    glfwSwapBuffers(engine->window);
-}
-
-void se_engine_poll_events(se_engine* engine) {
-    glfwPollEvents();
-}
-
-void se_engine_check_exit_keys(se_engine* engine, i32* keys, i32 key_count) {
-    if (key_count == 0) {
-        return;
-    }
-    for (i32 i = 0; i < key_count; i++) {
-        if (!engine->keys[keys[i]]) {
-            return;
-        }
-    }
-    glfwSetWindowShouldClose(engine->window, GLFW_TRUE);
+    // TODO: These will depend on which window is being rendered. 
+    // They should be accessed dynamically when rendering a specific window
+    //se_uniform_set_vec2(global_uniforms, "resolution", se_vec_ptr(se_vec2, engine->window_width, engine->window_height));
+    //se_uniform_set_vec2(global_uniforms, "mouse", se_vec_ptr(se_vec2, engine->mouse_x, engine->mouse_y));
 }
 
 extern b8 se_engine_is_key_down(se_engine* engine, i32 key) {
@@ -968,7 +873,7 @@ f64 get_time(void) {
 }
 
 f64 get_delta_time(const se_engine* engine) {
-   return engine->delta_time;
+   return engine->time.delta;
 }
 
 time_t get_file_mtime(const char* path) {
@@ -1001,69 +906,6 @@ char* load_file(const char* path) {
     
     fclose(file);
     return buffer;
-}
-
-void create_fullscreen_quad(GLuint* vao, GLuint* vbo) {
-    f32 quad_vertices[] = {
-        // positions   // texCoords
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-    };
-    
-    glGenVertexArrays(1, vao);
-    glGenBuffers(1, vbo);
-    
-    glBindVertexArray(*vao);
-    glBindBuffer(GL_ARRAY_BUFFER, *vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
-    glEnableVertexAttribArray(0);
-    
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32)));
-    glEnableVertexAttribArray(1);
-    
-    glBindVertexArray(0);
-}
-
-// Static helper functions
-static void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods) {
-    se_engine* engine = (se_engine*)glfwGetWindowUserPointer(window);
-    if (key >= 0 && key < 1024) {
-        if (action == GLFW_PRESS) {
-            engine->keys[key] = true;
-        } else if (action == GLFW_RELEASE) {
-            engine->keys[key] = false;
-        }
-    }
-}
-
-static void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    se_engine* engine = (se_engine*)glfwGetWindowUserPointer(window);
-    engine->mouse_dx = xpos - engine->mouse_x;
-    engine->mouse_dy = ypos - engine->mouse_y;
-    engine->mouse_x = xpos;
-    engine->mouse_y = ypos;
-}
-
-static void mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods) {
-    se_engine* engine = (se_engine*)glfwGetWindowUserPointer(window);
-    if (button >= 0 && button < 8) {
-        if (action == GLFW_PRESS) {
-            engine->mouse_buttons[button] = true;
-        } else if (action == GLFW_RELEASE) {
-            engine->mouse_buttons[button] = false;
-        }
-    }
-}
-
-static void framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height) {
-    se_engine* engine = (se_engine*)glfwGetWindowUserPointer(window);
-    engine->window_width = width;
-    engine->window_height = height;
-    glViewport(0, 0, width, height);
 }
 
 static GLuint compile_shader(const char* source, GLenum type) {

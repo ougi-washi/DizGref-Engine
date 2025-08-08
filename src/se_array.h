@@ -31,9 +31,23 @@
         *new_element = value; \
         return new_element; \
     } \
-    static void _array##_remove(_array* array, const sz index) { \
+    static sz _array##_find(_array* array, _type* value) { \
+        for (sz i = 0; i < array->size; i++) { \
+            if (&array->data[i] == value) { \
+                return i; \
+            } \
+        } \
+        return -1; \
+    } \
+    static void _array##_remove_at(_array* array, const sz index) { \
         array->size--; \
         memmove(&array->data[index], &array->data[index + 1], sizeof(array->data[index]) * (array->size - index)); \
+    } \
+    static void _array##_remove(_array* array, _type* value) { \
+        const sz index = _array##_find(array, value); \
+        if (index >= 0) { \
+            _array##_remove_at(array, index); \
+        } \
     } \
     static _type* _array##_get(_array* array, const sz index) { \
         se_assert(index >= 0 && index < array->size); \

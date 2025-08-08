@@ -22,7 +22,7 @@ i32 main() {
     }
     printf("\n");
 
-    ints_remove(&my_ints, 5);
+    ints_remove_at(&my_ints, 5);
 
     printf("Removed 5th element, current size: %zu\n", ints_get_size(&my_ints));
     printf("Current 5th element: %d\n", *ints_get(&my_ints, 5));
