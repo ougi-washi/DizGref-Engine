@@ -1,4 +1,4 @@
-// Syphax-Engine - Ougi Washi
+// Syphax-render_handle - Ougi Washi
 
 #include "se_render.h"
 #include "se_gl.h"
@@ -26,91 +26,53 @@ static const char* quad_vertex_shader =
 
 static f64 se_target_fps = 60.0;
 
-// Forward declarations
-static void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
-static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-static void mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods);
-static void framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height);
 static GLuint compile_shader(const char* source, GLenum type);
 static GLuint create_shader_program(const char* vertex_source, const char* fragment_source);
 
-// Engine functions
-b8 se_engine_init(se_engine* engine, u32 width, u32 height, const char* title) {
-    memset(engine, 0, sizeof(se_engine));
-    
-    // Initialize timing
-    engine->last_frame_time = get_time();
-    
-    return true;
+void se_render_clear() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void se_engine_cleanup(se_engine* engine) {
+void se_render_set_background_color(const se_vec4 color) {
+    glClearColor(color.x, color.y, color.z, color.w);
+}
+
+void se_render_handle_cleanup(se_render_handle* render_handle) {
     // Cleanup textures
-    se_foreach(se_textures, engine->textures, i) {
-        se_texture* curr_texture = se_textures_get(&engine->textures, i);
+    se_foreach(se_textures, render_handle->textures, i) {
+        se_texture* curr_texture = se_textures_get(&render_handle->textures, i);
         se_texture_cleanup(curr_texture);
     }
 
     // Cleanup shaders
-    se_foreach(se_shaders, engine->shaders, i) {
-        se_shader* curr_shader = se_shaders_get(&engine->shaders, i);
+    se_foreach(se_shaders, render_handle->shaders, i) {
+        se_shader* curr_shader = se_shaders_get(&render_handle->shaders, i);
         se_shader_cleanup(curr_shader);
     }
    
     // Cleanup models
-    for (u32 i = 0; i < engine->se_model_count; i++) {
-        se_model_cleanup(&engine->models[i]);
+    for (u32 i = 0; i < render_handle->se_model_count; i++) {
+        se_model_cleanup(&render_handle->models[i]);
     }
-    free(engine->models);
+    free(render_handle->models);
     
     // Cleanup buffers
-    se_foreach(se_render_buffers, engine->render_buffers, i) {
-        se_render_buffer* curr_buffer = se_render_buffers_get(&engine->render_buffers, i);
+    se_foreach(se_render_buffers, render_handle->render_buffers, i) {
+        se_render_buffer* curr_buffer = se_render_buffers_get(&render_handle->render_buffers, i);
         se_render_buffer_cleanup(curr_buffer);
     }
     
     se_window_destroy_all();
 }
 
-void se_engine_update(se_engine* engine) {
-    double current_time = get_time();
-    engine->time.delta = current_time - engine->time.last_frame;
-    engine->time.last_frame = current_time;
-    engine->time.current = current_time;
-    engine->frame_count++;
-    
-    // Check for shader reloads
-    se_foreach(se_shaders, engine->shaders, i) {
-        se_shader_reload_if_changed(se_shaders_get(&engine->shaders, i));
+void se_render_handle_reload_changed_shaders(se_render_handle* render_handle) {
+    se_foreach(se_shaders, render_handle->shaders, i) {
+        se_shader_reload_if_changed(se_shaders_get(&render_handle->shaders, i));
     }
-    
-    // Update built-in uniforms
-    se_uniforms* global_uniforms = &engine->global_uniforms;
-    se_uniform_set_float(global_uniforms, "time", engine->time.current);
-    se_uniform_set_float(global_uniforms, "delta_time", engine->time.delta);
-    se_uniform_set_int(global_uniforms, "frame", engine->frame_count);
-    
-    // TODO: These will depend on which window is being rendered. 
-    // They should be accessed dynamically when rendering a specific window
-    //se_uniform_set_vec2(global_uniforms, "resolution", se_vec_ptr(se_vec2, engine->window_width, engine->window_height));
-    //se_uniform_set_vec2(global_uniforms, "mouse", se_vec_ptr(se_vec2, engine->mouse_x, engine->mouse_y));
 }
 
-extern b8 se_engine_is_key_down(se_engine* engine, i32 key) {
-    return engine->keys[key];
-}
-
-
-void se_enigne_set_fps(const f64 fps) {
-    se_target_fps = fps;
-}
-
-void se_engine_sleep(const f64 seconds) {
-    usleep(seconds * 1000000);
-}
-
-se_uniforms* se_engine_get_global_uniforms(se_engine* engine) {
-    return &engine->global_uniforms;
+se_uniforms* se_render_handle_get_global_uniforms(se_render_handle* render_handle) {
+    return &render_handle->global_uniforms;
 }
 
 // Shader functions
@@ -128,10 +90,10 @@ char *read_file(const char *path) {
     return buf;
 }
 
-se_texture* se_texture_load(se_engine* engine, const char* file_path, const se_texture_wrap wrap) {
+se_texture* se_texture_load(se_render_handle* render_handle, const char* file_path, const se_texture_wrap wrap) {
     stbi_set_flip_vertically_on_load(1);
 
-    se_texture* texture = se_textures_increment(&engine->textures);
+    se_texture* texture = se_textures_increment(&render_handle->textures);
     
     const c8 full_path[MAX_PATH_LENGTH] = RESOURCES_DIR;
     strncat((c8*)full_path, file_path, MAX_PATH_LENGTH - strlen(full_path) - 1);
@@ -205,8 +167,8 @@ b8 se_shader_load_internal(se_shader* shader) {
     return true;
 }
 
-se_shader* se_shader_load(se_engine* engine, const char* vertex_path, const char* fragment_path) {
-    se_shader* new_shader = se_shaders_increment(&engine->shaders);
+se_shader* se_shader_load(se_render_handle* render_handle, const char* vertex_path, const char* fragment_path) {
+    se_shader* new_shader = se_shaders_increment(&render_handle->shaders);
     // make path absolute
     char* new_vertex_path = NULL;
     char* new_fragment_path = NULL;
@@ -250,10 +212,10 @@ b8 se_shader_reload_if_changed(se_shader* shader) {
     return false;
 }
 
-void se_shader_use(se_engine* engine, se_shader* shader, const b8 update_uniforms) {
+void se_shader_use(se_render_handle* render_handle, se_shader* shader, const b8 update_uniforms) {
     glUseProgram(shader->program);
     if (update_uniforms) {
-        se_uniform_apply(engine, shader);
+        se_uniform_apply(render_handle, shader);
     }
 }
 
@@ -511,24 +473,16 @@ b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, con
     return true;
 }
 
-void se_model_render(se_engine* engine, se_model* model) {
+void se_model_render(se_render_handle* render_handle, se_model* model, se_camera* camera) {
     // set up global view/proj once per frame
-    se_mat4 proj = mat4_perspective(  // 45° FOV
-        45.0f * (3.14159f/180.0f),
-        (f32)engine->window_width / (f32)engine->window_height,
-        0.1f, 100.0f
-    );
-    se_vec3 cam_pos    = { 0, 0,  5 };
-    se_vec3 cam_target = { 0, 0,  0 };
-    se_vec3 cam_up     = { 0, 1,  0 };
-    se_mat4 view = mat4_look_at(cam_pos, cam_target, cam_up);
-
+    const se_mat4 proj = se_camera_get_projection_matrix(camera);
+    const se_mat4 view = se_camera_get_view_matrix(camera);
     se_foreach(se_meshes, model->meshes, i) {
         se_mesh* mesh = se_meshes_get(&model->meshes, i);
         se_shader* sh = mesh->shader;
 
         //glUseProgram(sh->program);
-        se_shader_use(engine, sh, true);
+        se_shader_use(render_handle, sh, true);
 
         se_mat4 vp  = mat4_mul(proj, view);
         se_mat4 mvp = mat4_mul(vp, mesh->matrix); 
@@ -592,6 +546,35 @@ void se_model_scale(se_model* model, const se_vec3* v){
     }
 }
 
+// camera functions
+se_camera* se_camera_create(se_render_handle* render_handle) {
+    se_camera* camera = se_cameras_increment(&render_handle->cameras);
+    camera->position = (se_vec3){0, 0, 5};
+    camera->target = (se_vec3){0, 0, 0};
+    camera->up = (se_vec3){0, 1, 0};
+    camera->right = (se_vec3){1, 0, 0};
+    camera->fov = 45.0f;
+    camera->near = 0.1f;
+    camera->far = 100.0f;
+    camera->aspect = 1.78; 
+    return camera;
+}
+
+se_mat4 se_camera_get_view_matrix(const se_camera* camera) {
+    return mat4_look_at(camera->position, camera->target, camera->up);
+}
+
+se_mat4 se_camera_get_projection_matrix(const se_camera* camera) {
+    return mat4_perspective(camera->fov * (PI/180.0f), camera->aspect, camera->near, camera->far);
+}
+
+void se_camera_set_aspect(se_camera* camera, const f32 width, const f32 height) {
+    camera->aspect = width / height;
+}
+void se_camera_destroy(se_render_handle* render_handle, se_camera* camera) {
+    se_cameras_remove(&render_handle->cameras, camera);
+}
+ 
 // Buffer functions
 b8 se_render_buffer_create(se_render_buffer* buffer, u32 width, u32 height) {
     buffer->width = width;
@@ -799,7 +782,7 @@ void se_uniform_set_buffer_texture(se_uniforms* uniforms, const char* name, se_r
     se_uniform_set_texture(uniforms, name, buffer->texture);
 }
 
-void se_uniform_apply(se_engine* engine, se_shader* shader) {
+void se_uniform_apply(se_render_handle* render_handle, se_shader* shader) {
     glUseProgram(shader->program);
     u32 texture_unit = 0;
     se_foreach(se_uniforms, shader->uniforms, i) {
@@ -834,7 +817,7 @@ void se_uniform_apply(se_engine* engine, se_shader* shader) {
     }
     
     // apply global uniforms
-    se_uniforms* global_uniforms = se_engine_get_global_uniforms(engine);
+    se_uniforms* global_uniforms = se_render_handle_get_global_uniforms(render_handle);
     se_foreach(se_uniforms, *global_uniforms, i) {
         se_uniform* uniform = se_uniforms_get(global_uniforms, i);
         GLint location = glGetUniformLocation(shader->program, uniform->name); 
@@ -865,15 +848,6 @@ void se_uniform_apply(se_engine* engine, se_shader* shader) {
                 break;
         }
     }
-}
-
-// Utility functions
-f64 get_time(void) {
-    return glfwGetTime();
-}
-
-f64 get_delta_time(const se_engine* engine) {
-   return engine->time.delta;
 }
 
 time_t get_file_mtime(const char* path) {
