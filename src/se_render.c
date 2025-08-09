@@ -61,8 +61,6 @@ void se_render_handle_cleanup(se_render_handle* render_handle) {
         se_render_buffer* curr_buffer = se_render_buffers_get(&render_handle->render_buffers, i);
         se_render_buffer_cleanup(curr_buffer);
     }
-    
-    se_window_destroy_all();
 }
 
 void se_render_handle_reload_changed_shaders(se_render_handle* render_handle) {
