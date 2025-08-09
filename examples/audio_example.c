@@ -11,7 +11,7 @@ i32 main() {
     // audio setup  
     se_audio_input_init();
    
-    se_window* window = se_window_create("Syphax-render_handle", WIDTH, HEIGHT);
+    se_window* window = se_window_create("Syphax-Engine - Audio Example", WIDTH, HEIGHT);
     se_render_handle render_handle = {0};
     se_camera* camera = se_camera_create(&render_handle);
 
