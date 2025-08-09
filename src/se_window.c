@@ -140,16 +140,16 @@ extern void se_window_update(se_window* window) {
     window->frame_count++;
 }
 
-void se_window_draw(se_window* window) {
+void se_window_render_quad(se_window* window) {
     glBindVertexArray(window->quad_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 }
 
-void se_window_render(se_window* window) {
+void se_window_render_screen(se_window* window) {
     glViewport(0, 0, window->width, window->height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    se_window_draw(window);
+    se_window_render_quad(window);
     f64 time_left = 1. / window->target_fps - window->time.delta;
     if (time_left > 0) {
         usleep(time_left * 1000000);

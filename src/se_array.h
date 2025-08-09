@@ -39,12 +39,20 @@
         } \
         return -1; \
     } \
+    static sz _array##_find_last(_array* array, _type* value) { \
+        for (sz i = array->size - 1; i >= 0; i--) { \
+            if (&array->data[i] == value) { \
+                return i; \
+            } \
+        } \
+        return -1; \
+    } \
     static void _array##_remove_at(_array* array, const sz index) { \
         array->size--; \
         memmove(&array->data[index], &array->data[index + 1], sizeof(array->data[index]) * (array->size - index)); \
     } \
     static void _array##_remove(_array* array, _type* value) { \
-        const sz index = _array##_find(array, value); \
+        const sz index = _array##_find_last(array, value); \
         if (index >= 0) { \
             _array##_remove_at(array, index); \
         } \
@@ -68,5 +76,7 @@
 #define se_foreach(_array_type, _array, _it) \
     for (sz _it = 0; _it < _array_type##_get_size(&_array); _it++)
 
+#define se_foreach_reverse(_array_type, _array, _it) \
+    for (sz _it = _array_type##_get_size(&_array) - 1; _it >= 0; _it--)
 
 #endif // SE_ARRAY_H

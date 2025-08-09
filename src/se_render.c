@@ -321,8 +321,6 @@ void finalize_mesh(se_mesh* mesh, se_vertex* vertices, u32* indices, u32 vertex_
     glBindVertexArray(0);
 }
 
-
-
 b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, const sz se_shader_count) {
     char full_path[MAX_PATH_LENGTH];
     strncpy(full_path, RESOURCES_DIR, MAX_PATH_LENGTH - 1);
