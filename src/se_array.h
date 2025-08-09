@@ -16,7 +16,7 @@
         sz size; \
     } _array; \
     static void _array##_init(_array* array) { \
-        memset(array, 0, sizeof(_array)); \
+        memset(array, 0, sizeof(_type) * _size); \
         array->size = 0; \
     } \
     static _type* _array##_increment(_array* array) { \
@@ -47,9 +47,10 @@
         } \
         return -1; \
     } \
-    static void _array##_remove_at(_array* array, const sz index) { \
+    static void _array##_remove_at(_array* array, const size_t index) { \
+        if (index >= array->size) return; \
+        memmove(&array->data[index], &array->data[index + 1], sizeof(_type) * (array->size - index - 1)); \
         array->size--; \
-        memmove(&array->data[index], &array->data[index + 1], sizeof(array->data[index]) * (array->size - index)); \
     } \
     static void _array##_remove(_array* array, _type* value) { \
         const sz index = _array##_find_last(array, value); \

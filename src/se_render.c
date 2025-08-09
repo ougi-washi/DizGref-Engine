@@ -38,25 +38,26 @@ void se_render_set_background_color(const se_vec4 color) {
 }
 
 void se_render_handle_cleanup(se_render_handle* render_handle) {
-    // Cleanup textures
+    se_foreach(se_models, render_handle->models, i) {
+        se_model* curr_model = se_models_get(&render_handle->models, i);
+        se_model_cleanup(curr_model);
+    }
+
     se_foreach(se_textures, render_handle->textures, i) {
         se_texture* curr_texture = se_textures_get(&render_handle->textures, i);
         se_texture_cleanup(curr_texture);
     }
 
-    // Cleanup shaders
     se_foreach(se_shaders, render_handle->shaders, i) {
         se_shader* curr_shader = se_shaders_get(&render_handle->shaders, i);
         se_shader_cleanup(curr_shader);
     }
    
-    // Cleanup models
-    for (u32 i = 0; i < render_handle->se_model_count; i++) {
-        se_model_cleanup(&render_handle->models[i]);
+    se_foreach(se_models, render_handle->models, i) {
+        se_model* curr_model = se_models_get(&render_handle->models, i);
+        se_model_cleanup(curr_model);
     }
-    free(render_handle->models);
-    
-    // Cleanup buffers
+
     se_foreach(se_render_buffers, render_handle->render_buffers, i) {
         se_render_buffer* curr_buffer = se_render_buffers_get(&render_handle->render_buffers, i);
         se_render_buffer_cleanup(curr_buffer);
@@ -273,7 +274,7 @@ void se_mesh_scale(se_mesh* mesh, const se_vec3* v){
 
 // Helper function to finalize a mesh
 void finalize_mesh(se_mesh* mesh, se_vertex* vertices, u32* indices, u32 vertex_count, u32 index_count, 
-                   se_shader** shaders, sz se_shader_count, u32 se_mesh_index) {
+                   se_shaders_ptr* shaders, u32 se_mesh_index) {
 // Allocate mesh data
     mesh->vertices = malloc(vertex_count * sizeof(se_vertex));
     mesh->indices = malloc(index_count * sizeof(u32));
@@ -284,8 +285,8 @@ void finalize_mesh(se_mesh* mesh, se_vertex* vertices, u32* indices, u32 vertex_
     mesh->matrix = mat4_identity();
     
     // Assign shader (cycle through available shaders)
-    if (se_shader_count > 0) {
-        mesh->shader = shaders[se_mesh_index % se_shader_count];
+    if (se_shaders_ptr_get_size(shaders) > 0) {
+        mesh->shader = *se_shaders_ptr_get(shaders, se_mesh_index % se_shaders_ptr_get_size(shaders));
     } else {
         mesh->shader = NULL;
         fprintf(stderr, "No shaders provided for mesh %u\n", se_mesh_index);
@@ -319,7 +320,9 @@ void finalize_mesh(se_mesh* mesh, se_vertex* vertices, u32* indices, u32 vertex_
     glBindVertexArray(0);
 }
 
-b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, const sz se_shader_count) {
+se_model* se_model_load_obj(se_render_handle* render_handle, const char* path, se_shaders_ptr* shaders) {
+    se_model* model = se_models_increment(&render_handle->models);
+
     char full_path[MAX_PATH_LENGTH];
     strncpy(full_path, RESOURCES_DIR, MAX_PATH_LENGTH - 1);
     strncat(full_path, path, MAX_PATH_LENGTH - strlen(full_path) - 1);
@@ -327,10 +330,9 @@ b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, con
     FILE* file = fopen(full_path, "r");
     if (!file) {
         fprintf(stderr, "Failed to open OBJ file: %s\n", path);
-        return false;
+        return NULL;
     }
 
-    
     // Arrays for temporary storage (shared across all meshes)
     se_vec3* temp_vertices = malloc(SE_MAX_VERTICES * sizeof(se_vec3));
     se_vec3* temp_normals = malloc(SE_MAX_VERTICES * sizeof(se_vec3));
@@ -373,7 +375,7 @@ b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, con
                 se_mesh* new_mesh = se_meshes_increment(&model->meshes);
                 const sz mesh_count = se_meshes_get_size(&model->meshes);
                 finalize_mesh(new_mesh, current_vertices, current_indices, 
-                             current_vertex_count, current_index_count, shaders, se_shader_count, mesh_count - 1);
+                             current_vertex_count, current_index_count, shaders, mesh_count - 1);
                 
                 // Reset for next mesh
                 current_vertex_count = 0;
@@ -442,22 +444,10 @@ b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, con
         const sz mesh_count = se_meshes_get_size(&model->meshes);
         se_mesh* new_mesh = se_meshes_increment(&model->meshes);
         finalize_mesh(new_mesh, current_vertices, current_indices, 
-                     current_vertex_count, current_index_count, shaders, se_shader_count, mesh_count - 1);
+                     current_vertex_count, current_index_count, shaders, mesh_count - 1);
     }
     
     fclose(file);
-    
-    // If no meshes were created, create a default one
-    if (se_meshes_get_size(&model->meshes) == 0) {
-        fprintf(stderr, "No valid meshes found in OBJ file: %s\n", path);
-        free(temp_vertices);
-        free(temp_normals);
-        free(temp_uvs);
-        se_meshes_clear(&model->meshes);
-        free(current_vertices);
-        free(current_indices);
-        return false;
-    }
     
     // Cleanup temporary arrays
     free(temp_vertices);
@@ -466,7 +456,14 @@ b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, con
     free(current_vertices);
     free(current_indices);
     
-    return true;
+    // If no meshes were created, create a default one
+    if (se_meshes_get_size(&model->meshes) == 0) {
+        fprintf(stderr, "No valid meshes found in OBJ file: %s\n", path);
+        se_meshes_clear(&model->meshes);
+        return NULL;
+    }
+    
+    return model;
 }
 
 void se_model_render(se_render_handle* render_handle, se_model* model, se_camera* camera) {
@@ -571,7 +568,8 @@ void se_camera_destroy(se_render_handle* render_handle, se_camera* camera) {
 }
  
 // Buffer functions
-b8 se_render_buffer_create(se_render_buffer* buffer, u32 width, u32 height) {
+se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height) {
+    se_render_buffer* buffer = se_render_buffers_increment(&render_handle->render_buffers);
     buffer->width = width;
     buffer->height = height;
     
@@ -617,7 +615,7 @@ b8 se_render_buffer_create(se_render_buffer* buffer, u32 width, u32 height) {
     }
     
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    return true;
+    return buffer;
 }
 
 void se_render_buffer_copy_to_previous(se_render_buffer* buffer) {

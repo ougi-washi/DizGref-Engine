@@ -66,6 +66,7 @@ typedef struct {
     b8 needs_reload;
 } se_shader;
 SE_DEFINE_ARRAY(se_shader, se_shaders, SE_MAX_SHADERS);
+SE_DEFINE_ARRAY(se_shader*, se_shaders_ptr, SE_MAX_SHADERS);
 
 typedef struct se_texture {
     char path[SE_MAX_PATH_LENGTH];
@@ -92,6 +93,7 @@ SE_DEFINE_ARRAY(se_mesh, se_meshes, SE_MAX_MESHES);
 typedef struct {
     se_meshes meshes;
 } se_model;
+SE_DEFINE_ARRAY(se_model, se_models, SE_MAX_MODELS);
 
 typedef struct {
     se_vec3 position;
@@ -122,9 +124,7 @@ typedef struct {
     se_shaders shaders;
     se_uniforms global_uniforms;
     se_cameras cameras;
-
-    se_model* models;
-    u32 se_model_count;
+    se_models models;
 } se_render_handle;
 
 // helper functions
@@ -161,7 +161,7 @@ extern void se_mesh_rotate(se_mesh* mesh, const se_vec3* v);
 extern void se_mesh_scale(se_mesh* mesh, const se_vec3* v);
 
 // Model functions
-extern b8 se_model_load_obj(se_model* model, const char* path, se_shader** shaders, const sz se_shader_count); 
+extern se_model* se_model_load_obj(se_render_handle* render_handle, const char* path, se_shaders_ptr* shaders);
 extern void se_model_render(se_render_handle* render_handle, se_model* model, se_camera* camera);
 extern void se_model_cleanup(se_model* model);
 extern void se_model_translate(se_model* model, const se_vec3* v);
@@ -176,7 +176,7 @@ extern void se_camera_set_aspect(se_camera* camera, const f32 width, const f32 h
 extern void se_camera_destroy(se_render_handle* render_handle, se_camera* camera);
 
 // Buffer functions
-extern b8 se_render_buffer_create(se_render_buffer* buffer, u32 width, u32 height);
+extern se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height);
 extern void se_render_buffer_bind(se_render_buffer* buffer);
 extern void se_render_buffer_unbind(se_render_buffer* buf);
 extern void se_render_buffer_cleanup(se_render_buffer* buffer);
