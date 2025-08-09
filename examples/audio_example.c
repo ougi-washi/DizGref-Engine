@@ -51,7 +51,7 @@ i32 main() {
        
         se_uniforms* global_uniforms = se_render_handle_get_global_uniforms(&render_handle);
         const se_vec3 amps = se_audio_input_get_amplitudes();
-        //se_uniform_set_vec3(global_uniforms, "amps", &amps);
+        se_uniform_set_vec3(global_uniforms, "amps", &amps);
         //se_uniform_set_texture(global_uniforms, "perlin_256", perlin_256->id);
         //
         //// render buffer 1

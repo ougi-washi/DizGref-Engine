@@ -3,10 +3,10 @@ in vec2 v_uv;
 in vec3 v_normal;
 in vec3 v_fag_pos;
 
-uniform sampler2D buffer1;
+uniform vec3 amps;
 
 out vec4 FragColor;
 
 void main() {
-    FragColor = vec4(v_normal, 1.0);
+    FragColor = vec4(mix(vec3(.1), v_normal, amps), 1.0);
 }

@@ -479,7 +479,6 @@ void se_model_render(se_render_handle* render_handle, se_model* model, se_camera
         se_mesh* mesh = se_meshes_get(&model->meshes, i);
         se_shader* sh = mesh->shader;
 
-        //glUseProgram(sh->program);
         se_shader_use(render_handle, sh, true);
 
         se_mat4 vp  = mat4_mul(proj, view);
@@ -675,14 +674,11 @@ void se_uniform_set_float(se_uniforms* uniforms, const char* name, f32 value) {
             found_uniform->value.f = value;
             return;
         }
-        else {
-            se_uniform* new_uniform = se_uniforms_increment(uniforms);
-            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
-            new_uniform->type = SE_UNIFORM_FLOAT;
-            new_uniform->value.f = value;
-            return;
-        }
     }
+    se_uniform* new_uniform = se_uniforms_increment(uniforms);
+    strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+    new_uniform->type = SE_UNIFORM_FLOAT;
+    new_uniform->value.f = value;
 }
 
 void se_uniform_set_vec2(se_uniforms* uniforms, const char* name, const se_vec2* value) {
@@ -693,14 +689,11 @@ void se_uniform_set_vec2(se_uniforms* uniforms, const char* name, const se_vec2*
             memcpy(&found_uniform->value.vec2, value, sizeof(se_vec2));
             return;
         }
-        else {
-            se_uniform* new_uniform = se_uniforms_increment(uniforms);
-            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
-            new_uniform->type = SE_UNIFORM_VEC2;
-            memcpy(&new_uniform->value.vec2, value, sizeof(se_vec2));
-            return;
-        }
     }
+    se_uniform* new_uniform = se_uniforms_increment(uniforms);
+    strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+    new_uniform->type = SE_UNIFORM_VEC2;
+    memcpy(&new_uniform->value.vec2, value, sizeof(se_vec2));
 }
 
 void se_uniform_set_vec3(se_uniforms* uniforms, const char* name, const se_vec3* value) {
@@ -711,14 +704,11 @@ void se_uniform_set_vec3(se_uniforms* uniforms, const char* name, const se_vec3*
             memcpy(&found_uniform->value.vec3, value, sizeof(se_vec3));
             return;
         }
-        else {
-            se_uniform* new_uniform = se_uniforms_increment(uniforms);
-            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
-            new_uniform->type = SE_UNIFORM_VEC3;
-            memcpy(&new_uniform->value.vec3, value, sizeof(se_vec3));
-            return;
-        }
     }
+    se_uniform* new_uniform = se_uniforms_increment(uniforms);
+    strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+    new_uniform->type = SE_UNIFORM_VEC3;
+    memcpy(&new_uniform->value.vec3, value, sizeof(se_vec3));
 }
 
 void se_uniform_set_vec4(se_uniforms* uniforms, const char* name, const se_vec4* value) {
@@ -729,14 +719,11 @@ void se_uniform_set_vec4(se_uniforms* uniforms, const char* name, const se_vec4*
             memcpy(&found_uniform->value.vec4, value, sizeof(se_vec4));
             return;
         }
-        else {
-            se_uniform* new_uniform = se_uniforms_increment(uniforms);
-            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
-            new_uniform->type = SE_UNIFORM_VEC4;
-            memcpy(&new_uniform->value.vec4, value, sizeof(se_vec4));
-            return;
-        }
     }
+    se_uniform* new_uniform = se_uniforms_increment(uniforms);
+    strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+    new_uniform->type = SE_UNIFORM_VEC4;
+    memcpy(&new_uniform->value.vec4, value, sizeof(se_vec4));
 }           
 
 void se_uniform_set_int(se_uniforms* uniforms, const char* name, i32 value) {
@@ -747,14 +734,11 @@ void se_uniform_set_int(se_uniforms* uniforms, const char* name, i32 value) {
             found_uniform->value.i = value;
             return;
         }
-        else {
-            se_uniform* new_uniform = se_uniforms_increment(uniforms);
-            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
-            new_uniform->type = SE_UNIFORM_INT;
-            new_uniform->value.i = value;
-            return;
-        }
     }
+    se_uniform* new_uniform = se_uniforms_increment(uniforms);
+    strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+    new_uniform->type = SE_UNIFORM_INT;
+    new_uniform->value.i = value;
 }
 
 void se_uniform_set_texture(se_uniforms* uniforms, const char* name, GLuint texture) {
@@ -766,14 +750,11 @@ void se_uniform_set_texture(se_uniforms* uniforms, const char* name, GLuint text
             return;
             
         }
-        else {
-            se_uniform* new_uniform = se_uniforms_increment(uniforms);
-            strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
-            new_uniform->type = SE_UNIFORM_TEXTURE;
-            new_uniform->value.texture = texture;
-            return;
-        }
     }
+    se_uniform* new_uniform = se_uniforms_increment(uniforms);
+    strncpy(new_uniform->name, name, sizeof(new_uniform->name) - 1);
+    new_uniform->type = SE_UNIFORM_TEXTURE;
+    new_uniform->value.texture = texture;
 }
 
 void se_uniform_set_buffer_texture(se_uniforms* uniforms, const char* name, se_render_buffer* buffer) {
