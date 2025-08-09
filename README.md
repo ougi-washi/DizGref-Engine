@@ -31,9 +31,12 @@ To run an example, simply run:
 ```
 
 ### Library Dependencies
+Locally under `/lib/`
 * [GLFW](https://github.com/glfw/glfw)
 * [STB](https://github.com/nothings/stb)
 
+TODO: move to `/lib/`
+* [portaudio](https://github.com/PortAudio/portaudio)
+
 ### License
 MIT License
-
