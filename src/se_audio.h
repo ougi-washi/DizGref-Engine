@@ -4,7 +4,6 @@
 #define SE_AUDIO_H
 
 #include "se_math.h"
-#include <portaudio.h>
 
 void se_audio_input_init();
 void se_audio_input_cleanup();
