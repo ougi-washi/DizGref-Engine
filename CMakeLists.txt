@@ -40,6 +40,7 @@ set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "Build dynamic library" FORCE)
 set(PA_BUILD_TESTS OFF CACHE BOOL "Include test projects" FORCE)
 set(PA_BUILD_EXAMPLES OFF CACHE BOOL "Include example projects" FORCE)
 add_subdirectory(${LIB_DIR}/portaudio)
+target_compile_options(portaudio PRIVATE -Wno-deprecated-declarations)
 
 # setup library macro
 macro(setup_library arg_lib_name arg_source_path arg_include_path)
