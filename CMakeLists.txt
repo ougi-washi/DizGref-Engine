@@ -17,11 +17,11 @@ if(NOT CMAKE_GENERATOR)
 endif()
 
 # Directory setup
-set(LIB_DIR "lib")
-set(SRC_DIR "src")
-set(BIN_DIR "bin")
-set(RESOURCES_DIR "resources")
-set(EXAMPLES_DIR "examples")
+set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+set(BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+set(RESOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+set(EXAMPLES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/examples")
 
 # GLSL
 find_package(OpenGL REQUIRED)
@@ -36,7 +36,10 @@ include_directories(${LIB_DIR}/stb)
 
 # PORTAUDIO
 message(STATUS "Adding PORTAUDIO library")
-include_directories(${LIB_DIR}/portaudio)
+set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "Build dynamic library" FORCE)
+set(PA_BUILD_TESTS OFF CACHE BOOL "Include test projects" FORCE)
+set(PA_BUILD_EXAMPLES OFF CACHE BOOL "Include example projects" FORCE)
+add_subdirectory(${LIB_DIR}/portaudio)
 
 # setup library macro
 macro(setup_library arg_lib_name arg_source_path arg_include_path)
@@ -47,11 +50,11 @@ macro(setup_library arg_lib_name arg_source_path arg_include_path)
 					"${arg_source_path}/**/*.cpp")
 	add_library(${arg_lib_name} STATIC	${CURRENT_SRC_FILES})
 	target_include_directories(${arg_lib_name} PUBLIC ${arg_include_path})
-    target_compile_definitions(${arg_lib_name} PUBLIC RESOURCES_DIR="${CMAKE_SOURCE_DIR}/${RESOURCES_DIR}/")
+    target_compile_definitions(${arg_lib_name} PUBLIC RESOURCES_DIR="${RESOURCES_DIR}/")
 endmacro()
 
 # Main module
-set(MAIN_MODULE_INCLUDES ${PROJECT_SOURCE_DIR}/${SRC_DIR} ${PROJECT_SOURCE_DIR}/${LIB_DIR})
+set(MAIN_MODULE_INCLUDES ${SRC_DIR} ${LIB_DIR})
 setup_library(MAIN ${SRC_DIR} "${MAIN_MODULE_INCLUDES}")
 target_link_libraries(MAIN PUBLIC glfw OpenGL::GL portaudio)
 
@@ -59,8 +62,8 @@ macro(setup_executable arg_exec_dir arg_exec_name modules)
     message(STATUS "Generating executable ${arg_exec_name}")
     add_executable(${arg_exec_name} "${arg_exec_dir}/${arg_exec_name}.c")
     target_link_libraries(${arg_exec_name} PUBLIC MAIN)
-    target_compile_definitions(${arg_exec_name} PUBLIC RESOURCES_DIR="${CMAKE_SOURCE_DIR}/${RESOURCES_DIR}/")
-    set_target_properties(${arg_exec_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/${BIN_DIR})
+    target_compile_definitions(${arg_exec_name} PUBLIC RESOURCES_DIR="${RESOURCES_DIR}/")
+    set_target_properties(${arg_exec_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
 endmacro()
 
 file(GLOB EXAMPLES 	"${EXAMPLES_DIR}/*.c" 
