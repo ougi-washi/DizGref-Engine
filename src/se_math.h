@@ -5,13 +5,14 @@
 
 #include "se_types.h"
 
-typedef struct { f32 m[16]; } se_mat4;
+typedef struct { f32 x, y; } se_vec2;
 typedef struct { f32 x, y, z; } se_vec3;
 typedef struct { f32 x, y, z, w; } se_vec4;
-typedef struct { f32 x, y; } se_vec2;
+typedef struct { f32 m[16]; } se_mat4;
 
-#define se_vec(_type, ...) ( _type ) { __VA_ARGS__ }
-#define se_vec_ptr(_type, ...) &( _type ) { __VA_ARGS__ }
+#define se_vec(_vec_size, ...) ( se_vec##_vec_size ) { __VA_ARGS__ }
+
+#define PI 3.14159265359
 
 static se_mat4 mat4_identity(void) {
     se_mat4 I = { {
@@ -22,7 +23,6 @@ static se_mat4 mat4_identity(void) {
     } };
     return I;
 }
-
 
 // Math (TODO: Change all args to ptrs for performance)
 #define PI 3.14159265359

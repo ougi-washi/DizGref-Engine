@@ -11,7 +11,6 @@
 #include <assert.h>
 #include <pthread.h>
 
-#define PI 3.14159265359
 
 #define SE_MAX_RENDER_BUFFERS 16 
 #define SE_MAX_UNIFORMS 32
@@ -66,7 +65,8 @@ typedef struct {
     b8 needs_reload;
 } se_shader;
 SE_DEFINE_ARRAY(se_shader, se_shaders, SE_MAX_SHADERS);
-SE_DEFINE_ARRAY(se_shader*, se_shaders_ptr, SE_MAX_SHADERS);
+typedef se_shader* se_shader_ptr;
+SE_DEFINE_ARRAY(se_shader_ptr, se_shaders_ptr, SE_MAX_SHADERS);
 
 typedef struct se_texture {
     char path[SE_MAX_PATH_LENGTH];
@@ -76,6 +76,8 @@ typedef struct se_texture {
     i32 channels;
 } se_texture;
 SE_DEFINE_ARRAY(se_texture, se_textures, SE_MAX_TEXTURES);
+typedef se_texture* se_texture_ptr;
+SE_DEFINE_ARRAY(se_texture_ptr, se_textures_ptr, SE_MAX_TEXTURES);
 
 typedef struct {
     se_vertex* vertices;
@@ -86,7 +88,7 @@ typedef struct {
     GLuint vbo;
     GLuint ebo;
     se_shader* shader;
-    se_mat4 matrix;  
+    se_mat4 matrix;
 } se_mesh;
 SE_DEFINE_ARRAY(se_mesh, se_meshes, SE_MAX_MESHES);
 
@@ -94,6 +96,8 @@ typedef struct {
     se_meshes meshes;
 } se_model;
 SE_DEFINE_ARRAY(se_model, se_models, SE_MAX_MODELS);
+typedef se_model* se_model_ptr;
+SE_DEFINE_ARRAY(se_model_ptr, se_models_ptr, SE_MAX_MODELS);
 
 typedef struct {
     se_vec3 position;
@@ -106,6 +110,8 @@ typedef struct {
     f32 aspect;
 } se_camera;
 SE_DEFINE_ARRAY(se_camera, se_cameras, SE_MAX_CAMERAS);
+typedef se_camera* se_camera_ptr;
+SE_DEFINE_ARRAY(se_camera_ptr, se_cameras_ptr, SE_MAX_CAMERAS);
 
 typedef struct {
     GLuint framebuffer;
@@ -113,10 +119,12 @@ typedef struct {
     GLuint prev_framebuffer;
     GLuint prev_texture;
     GLuint depth_buffer;
-    u32 width;
-    u32 height;
+    se_vec2 size;
+    se_vec2 position;
 } se_render_buffer;
 SE_DEFINE_ARRAY(se_render_buffer, se_render_buffers, SE_MAX_RENDER_BUFFERS);
+typedef se_render_buffer* se_render_buffer_ptr;
+SE_DEFINE_ARRAY(se_render_buffer_ptr, se_render_buffers_ptr, SE_MAX_RENDER_BUFFERS);
 
 typedef struct {
     se_render_buffers render_buffers;

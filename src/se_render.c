@@ -374,9 +374,10 @@ se_model* se_model_load_obj(se_render_handle* render_handle, const char* path, s
             if (hse_faces && current_vertex_count > 0) {
                 se_mesh* new_mesh = se_meshes_increment(&model->meshes);
                 const sz mesh_count = se_meshes_get_size(&model->meshes);
-                finalize_mesh(new_mesh, current_vertices, current_indices, 
-                             current_vertex_count, current_index_count, shaders, mesh_count - 1);
-                
+                if (mesh_count > 0) {
+                    finalize_mesh(new_mesh, current_vertices, current_indices, 
+                                 current_vertex_count, current_index_count, shaders, mesh_count - 1);
+                }
                 // Reset for next mesh
                 current_vertex_count = 0;
                 current_index_count = 0;
@@ -570,9 +571,8 @@ void se_camera_destroy(se_render_handle* render_handle, se_camera* camera) {
 // Buffer functions
 se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height) {
     se_render_buffer* buffer = se_render_buffers_increment(&render_handle->render_buffers);
-    buffer->width = width;
-    buffer->height = height;
-    
+    buffer->size = se_vec(2, width, height);
+
     // Create framebuffer
     glGenFramebuffers(1, &buffer->framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->framebuffer);
@@ -623,8 +623,8 @@ void se_render_buffer_copy_to_previous(se_render_buffer* buffer) {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->prev_framebuffer);
     
     glBlitFramebuffer(
-        0, 0, buffer->width, buffer->height,  // Source rectangle
-        0, 0, buffer->width, buffer->height,  // Destination rectangle
+        0, 0, buffer->size.x, buffer->size.y,  // Source rectangle
+        0, 0, buffer->size.x, buffer->size.y,  // Destination rectangle
         GL_COLOR_BUFFER_BIT,                  // Copy color buffer
         GL_NEAREST                            // Use nearest filtering for exact copy
     );
@@ -636,14 +636,11 @@ void se_render_buffer_copy_to_previous(se_render_buffer* buffer) {
 void se_render_buffer_bind(se_render_buffer* buffer) {
     se_render_buffer_copy_to_previous(buffer);
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->framebuffer);
-    glViewport(0, 0, buffer->width, buffer->height);
+    glViewport(0, 0, buffer->size.x, buffer->size.y);
 }
 
 void se_render_buffer_unbind(se_render_buffer* buf) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //GLuint tmp = buf->prev_texture;
-    //buf->prev_texture = buf->texture;
-    //buf->texture = tmp;
 }
 
 void se_render_buffer_cleanup(se_render_buffer* buffer) {
