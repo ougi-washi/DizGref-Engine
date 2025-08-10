@@ -31,12 +31,9 @@ To run an example, simply run:
 ```
 
 ### Library Dependencies
-Locally under `/lib/`
 * [GLFW](https://github.com/glfw/glfw)
 * [STB](https://github.com/nothings/stb)
-
-TODO: move to `/lib/`
-* [portaudio](https://github.com/PortAudio/portaudio)
+* [portaudio](https://github.com/PortAudio/portaudio): You may need to install `libpulse-dev` `libasound-dev` `libsndio-dev` `libjack-jackd2-dev`
 
 ### License
 MIT License
