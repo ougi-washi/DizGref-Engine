@@ -10,8 +10,8 @@ i32 main() {
     
     se_window* window = se_window_create("Syphax-Engine - Scene Example", WIDTH, HEIGHT);
 
-    se_scene_2d scene_2d = {0};
-    se_scene_2d_add_render_buffer(&scene_2d, se_render_buffer_create(&render_handle, WIDTH, HEIGHT));
+    //se_scene_2d scene_2d = {0};
+    //se_scene_2d_add_render_buffer(&scene_2d, se_render_buffer_create(&render_handle, WIDTH, HEIGHT));
     
     se_scene_3d scene_3d = {0};
 
@@ -28,7 +28,7 @@ i32 main() {
         se_window_check_exit_keys(window, &exit_keys);
         
         se_scene_3d_render(&scene_3d, &render_handle);
-        se_scene_2d_render(&scene_2d, &render_handle, window);
+        //se_scene_2d_render(&scene_2d, &render_handle, window);
         
         se_window_render_screen(window);
     }
