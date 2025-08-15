@@ -13,8 +13,6 @@
 
 typedef struct {
     se_render_buffers_ptr render_buffers;
-    
-    se_shader_ptr output_shader;
     se_render_buffer_ptr output;
 } se_scene_2d;
 SE_DEFINE_ARRAY(se_scene_2d, se_scenes_2d, SE_MAX_SCENES);

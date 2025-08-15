@@ -121,6 +121,7 @@ typedef struct {
     GLuint depth_buffer;
     se_vec2 size;
     se_vec2 position;
+    se_shader_ptr shader;
 } se_render_buffer;
 SE_DEFINE_ARRAY(se_render_buffer, se_render_buffers, SE_MAX_RENDER_BUFFERS);
 typedef se_render_buffer* se_render_buffer_ptr;
@@ -150,7 +151,8 @@ extern se_texture* se_texture_load(se_render_handle* render_handle, const char* 
 extern void se_texture_cleanup(se_texture* texture);
 
 // Shader functions
-extern se_shader* se_shader_load(se_render_handle* render_handle, const char* vertex_path, const char* fragment_path);
+extern se_shader* se_shader_load(se_render_handle* render_handle, const char* vertex_file_path, const char* fragment_file_path);
+extern se_shader* se_shader_load_from_memory(se_render_handle* render_handle, const char* vertex_data, const char* fragment_data);
 extern b8 se_shader_reload_if_changed(se_shader* shader);
 extern void se_shader_use(se_render_handle* render_handle, se_shader* shader, const b8 update_uniforms);
 extern void se_shader_cleanup(se_shader* shader);
@@ -185,6 +187,8 @@ extern void se_camera_destroy(se_render_handle* render_handle, se_camera* camera
 
 // Buffer functions
 extern se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height);
+extern void se_render_buffer_set_shader(se_render_buffer* buffer, se_shader* shader);
+extern void se_render_buffer_unset_shader(se_render_buffer* buffer);
 extern void se_render_buffer_bind(se_render_buffer* buffer);
 extern void se_render_buffer_unbind(se_render_buffer* buf);
 extern void se_render_buffer_cleanup(se_render_buffer* buffer);

@@ -151,7 +151,6 @@ b8 se_shader_load_internal(se_shader* shader) {
         return false;
     }
     shader->program = create_shader_program(vertex_source, fragment_source);
-    printf("Shader - created program: %d, from %s, %s\n", shader->program, shader->vertex_path, shader->fragment_path);
 
     free(vertex_source);
     free(fragment_source);
@@ -162,26 +161,26 @@ b8 se_shader_load_internal(se_shader* shader) {
     
     shader->vertex_mtime = get_file_mtime(shader->vertex_path);
     shader->fragment_mtime = get_file_mtime(shader->fragment_path);
-    printf("Shader - loaded: %s, %s\n", shader->vertex_path, shader->fragment_path);
+    printf("Shader - created program: %d, from %s, %s\n", shader->program, shader->vertex_path, shader->fragment_path);
     return true;
 }
 
-se_shader* se_shader_load(se_render_handle* render_handle, const char* vertex_path, const char* fragment_path) {
+se_shader* se_shader_load(se_render_handle* render_handle, const char* vertex_file_path, const char* fragment_file_path) {
     se_shader* new_shader = se_shaders_increment(&render_handle->shaders);
     // make path absolute
     char* new_vertex_path = NULL;
     char* new_fragment_path = NULL;
     
-    if (strlen(vertex_path) > 0) {
-        new_vertex_path = malloc(strlen(RESOURCES_DIR) + strlen(vertex_path) + 1);
+    if (strlen(vertex_file_path) > 0) {
+        new_vertex_path = malloc(strlen(RESOURCES_DIR) + strlen(vertex_file_path) + 1);
         strcpy(new_vertex_path, RESOURCES_DIR);
-        strcat(new_vertex_path, vertex_path);
+        strcat(new_vertex_path, vertex_file_path);
     }
     
-    if (strlen(fragment_path) > 0) {
-        new_fragment_path = malloc(strlen(RESOURCES_DIR) + strlen(fragment_path) + 1);
+    if (strlen(fragment_file_path) > 0) {
+        new_fragment_path = malloc(strlen(RESOURCES_DIR) + strlen(fragment_file_path) + 1);
         strcpy(new_fragment_path, RESOURCES_DIR);
-        strcat(new_fragment_path, fragment_path);
+        strcat(new_fragment_path, fragment_file_path);
     }
 
     strcpy(new_shader->vertex_path, new_vertex_path);
@@ -633,6 +632,16 @@ void se_render_buffer_copy_to_previous(se_render_buffer* buffer) {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
+void se_render_buffer_set_shader(se_render_buffer* buffer, se_shader* shader) {
+    se_assert(buffer && shader);
+    buffer->shader = shader;
+}
+
+void se_render_buffer_unset_shader(se_render_buffer* buffer) {
+    se_assert(buffer);
+    buffer->shader = NULL;
+}
+
 void se_render_buffer_bind(se_render_buffer* buffer) {
     se_render_buffer_copy_to_previous(buffer);
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->framebuffer);
@@ -879,6 +888,7 @@ static GLuint create_shader_program(const char* vertex_source, const char* fragm
     if (!vertex_shader || !fragment_shader) {
         if (vertex_shader) glDeleteShader(vertex_shader);
         if (fragment_shader) glDeleteShader(fragment_shader);
+        printf("Failed to create shader program, vertex or fragment shaders are invalid\n");
         return 0;
     }
     

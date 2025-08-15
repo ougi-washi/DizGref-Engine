@@ -5,26 +5,12 @@
 se_scenes_2d scenes_2d = {0};
 se_scenes_3d scenes_3d = {0};
 
-c8 vert_shader_2d[] = "#version 330 core\n"
-                      "layout(location = 0) in vec2 position;\n"
-                      "out vec2 texCoord;\n"
-                      "void main() {\n"
-                      "    gl_Position = vec4(position, 0.0, 1.0);\n"
-                      "    texCoord = position * 0.5 + 0.5;\n"
-                      "}\n";
-
-c8 frag_shader_2d[] = "#version 330 core\n"
-                      "in vec2 texCoord;\n"
-                      "out vec4 color;\n"
-                      "uniform sampler2D final;\n"
-                      "void main() {\n"
-                      "    color = texture(final, texCoord);\n"
-                      "}\n";
-
 se_scene_2d* se_scene_2d_create(se_render_handle* render_handle, const se_vec2* size) {
+    printf("Creating scene 2D\n");
     se_scene_2d* new_scene = se_scenes_2d_increment(&scenes_2d);
     new_scene->output = se_render_buffer_create(render_handle, size->x, size->y);
-    new_scene->output_shader = se_shader_load(render_handle, vert_shader_2d, frag_shader_2d);
+    new_scene->output_shader = se_shader_load(render_handle, "shaders/scene_2d_output_vert.glsl", "shaders/scene_2d_output_frag.glsl");
+    se_assert(new_scene->output_shader);
     return new_scene;
 }
 
@@ -34,6 +20,7 @@ void se_scene_2d_destroy(se_scene_2d* scene) {
 }
 
 void se_scene_2d_render(se_scene_2d* scene, se_render_handle* render_handle, se_window* window) {
+    se_shader_use(render_handle, scene->output_shader, true);
     se_foreach(se_render_buffers_ptr, scene->render_buffers, i) {
         se_render_buffer_ptr* buffer_ptr = se_render_buffers_ptr_get(&scene->render_buffers, i);
         if (buffer_ptr == NULL) {
