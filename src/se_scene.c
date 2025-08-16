@@ -8,9 +8,7 @@ se_scenes_3d scenes_3d = {0};
 se_scene_2d* se_scene_2d_create(se_render_handle* render_handle, const se_vec2* size) {
     printf("Creating scene 2D\n");
     se_scene_2d* new_scene = se_scenes_2d_increment(&scenes_2d);
-    new_scene->output = se_render_buffer_create(render_handle, size->x, size->y);
-    new_scene->output_shader = se_shader_load(render_handle, "shaders/scene_2d_output_vert.glsl", "shaders/scene_2d_output_frag.glsl");
-    se_assert(new_scene->output_shader);
+    new_scene->output = se_render_buffer_create(render_handle, size->x, size->y, "shaders/scene_2d_output_frag.glsl");
     return new_scene;
 }
 
@@ -20,17 +18,31 @@ void se_scene_2d_destroy(se_scene_2d* scene) {
 }
 
 void se_scene_2d_render(se_scene_2d* scene, se_render_handle* render_handle, se_window* window) {
-    se_shader_use(render_handle, scene->output_shader, true);
+    se_render_buffer_bind(scene->output);
+    se_render_clear();
+    se_render_buffer_unbind(scene->output);
+
     se_foreach(se_render_buffers_ptr, scene->render_buffers, i) {
         se_render_buffer_ptr* buffer_ptr = se_render_buffers_ptr_get(&scene->render_buffers, i);
         if (buffer_ptr == NULL) {
             continue;
         }
 
-        se_render_buffer_bind(*buffer_ptr);
+        se_render_buffer* buffer = *buffer_ptr;
+
+        // render buffer
+        se_shader_use(render_handle, buffer->shader, true);
+        se_render_buffer_bind(buffer);
         se_render_clear();
         se_window_render_quad(window);
-        se_render_buffer_unbind(*buffer_ptr);
+        se_render_buffer_unbind(buffer);
+
+        // render output
+        se_shader_set_texture(scene->output->shader, "u_texture", buffer->texture);
+        se_shader_use(render_handle, scene->output->shader, true);
+        se_render_buffer_bind(scene->output);
+        se_window_render_quad(window);
+        se_render_buffer_unbind(scene->output);
     }
 }
 
@@ -44,7 +56,7 @@ void se_scene_2d_remove_render_buffer(se_scene_2d* scene, se_render_buffer* buff
 
 se_scene_3d* se_scene_3d_create(se_render_handle* render_handle, const se_vec2* size) {
     se_scene_3d* new_scene = se_scenes_3d_increment(&scenes_3d);
-    new_scene->output = se_render_buffer_create(render_handle, size->x, size->y);
+    new_scene->output = se_render_buffer_create(render_handle, size->x, size->y, "shaders/scene_3d_output_frag.glsl");
     return new_scene;
 }
 

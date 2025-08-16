@@ -11,7 +11,8 @@ i32 main() {
     se_window* window = se_window_create("Syphax-Engine - Scene Example", WIDTH, HEIGHT);
 
     se_scene_2d* scene_2d = se_scene_2d_create(&render_handle, &se_vec(2, WIDTH, HEIGHT));
-    se_scene_2d_add_render_buffer(scene_2d, se_render_buffer_create(&render_handle, WIDTH, HEIGHT));
+    se_render_buffer* render_buffer = se_render_buffer_create(&render_handle, WIDTH, HEIGHT, "examples/scene_example/render_buffer_frag.glsl");
+    se_scene_2d_add_render_buffer(scene_2d, render_buffer);
     //se_scene_3d scene_3d = {0};
 
     //se_shaders_ptr model_shaders = {0};
@@ -25,7 +26,8 @@ i32 main() {
     while (!se_window_should_close(window)) {
         se_window_poll_events();
         se_window_check_exit_keys(window, &exit_keys);
-        
+        se_window_update(window);
+
         //se_scene_3d_render(&scene_3d, &render_handle);
         se_scene_2d_render(scene_2d, &render_handle, window);
         

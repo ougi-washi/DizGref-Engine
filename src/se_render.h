@@ -186,7 +186,7 @@ extern void se_camera_set_aspect(se_camera* camera, const f32 width, const f32 h
 extern void se_camera_destroy(se_render_handle* render_handle, se_camera* camera);
 
 // Buffer functions
-extern se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height);
+extern se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height, const c8* fragment_shader_path);
 extern void se_render_buffer_set_shader(se_render_buffer* buffer, se_shader* shader);
 extern void se_render_buffer_unset_shader(se_render_buffer* buffer);
 extern void se_render_buffer_bind(se_render_buffer* buffer);

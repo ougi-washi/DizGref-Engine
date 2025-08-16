@@ -568,7 +568,7 @@ void se_camera_destroy(se_render_handle* render_handle, se_camera* camera) {
 }
  
 // Buffer functions
-se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height) {
+se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height, const c8* fragment_shader_path) {
     se_render_buffer* buffer = se_render_buffers_increment(&render_handle->render_buffers);
     buffer->size = se_vec(2, width, height);
 
@@ -605,6 +605,8 @@ se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 w
     glGenFramebuffers(1, &buffer->prev_framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->prev_framebuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffer->prev_texture, 0);
+
+    buffer->shader = se_shader_load(render_handle, "shaders/default_vert.glsl", fragment_shader_path);
 
     // Check framebuffer completeness
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {

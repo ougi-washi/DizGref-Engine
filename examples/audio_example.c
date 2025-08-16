@@ -23,7 +23,7 @@ i32 main() {
     se_shaders_ptr_add(&se_mesh_shaders, se_shader_0);
 
     se_model* model = se_model_load_obj(&render_handle, "cube.obj", &se_mesh_shaders);
-    se_render_buffer* model_buf = se_render_buffer_create(&render_handle, WIDTH, HEIGHT);
+    se_render_buffer* model_buf = se_render_buffer_create(&render_handle, WIDTH, HEIGHT, "examples/audio_example/model_buffer_frag.glsl"); // TODO: fix
     
     key_combo exit_keys = {0};
     key_combo_add(&exit_keys, GLFW_KEY_ESCAPE);
