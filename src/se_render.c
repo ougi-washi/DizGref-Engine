@@ -561,7 +561,7 @@ se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, const
     se_render_buffer* buffer = se_render_buffers_increment(&render_handle->render_buffers);
    
     buffer->texture_size = se_vec(2, width, height);
-    buffer->size = se_vec(2, 1., 1.);
+    buffer->scale = se_vec(2, 1., 1.);
     buffer->position = se_vec(2, 0., 0.);
 
     // Create framebuffer
@@ -616,8 +616,8 @@ void se_render_buffer_copy_to_previous(se_render_buffer* buffer) {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->prev_framebuffer);
     
     glBlitFramebuffer(
-        0, 0, buffer->size.x, buffer->size.y,  // Source rectangle
-        0, 0, buffer->size.x, buffer->size.y,  // Destination rectangle
+        0, 0, buffer->texture_size.x, buffer->texture_size.y,  // Source rectangle
+        0, 0, buffer->texture_size.x, buffer->texture_size.y,  // Destination rectangle
         GL_COLOR_BUFFER_BIT,                  // Copy color buffer
         GL_NEAREST                            // Use nearest filtering for exact copy
     );
@@ -640,13 +640,22 @@ void se_render_buffer_bind(se_render_buffer* buffer) {
     se_render_buffer_copy_to_previous(buffer);
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->framebuffer);
     glViewport(0, 0, buffer->texture_size.x, buffer->texture_size.y);
-    se_shader_set_vec2(buffer->shader, "u_size", &buffer->size);
+    se_shader_set_texture(buffer->shader, "u_prev", buffer->prev_texture);
+    se_shader_set_vec2(buffer->shader, "u_scale", &buffer->scale);
     se_shader_set_vec2(buffer->shader, "u_position", &buffer->position);
     se_shader_set_vec2(buffer->shader, "u_texture_size", &buffer->texture_size);
 }
 
 void se_render_buffer_unbind(se_render_buffer* buf) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void se_render_buffer_set_scale(se_render_buffer* buffer, const se_vec2* scale) {
+    buffer->scale = *scale;
+}
+
+void se_render_buffer_set_position(se_render_buffer* buffer, const se_vec2* position) {
+    buffer->position = *position;
 }
 
 void se_render_buffer_cleanup(se_render_buffer* buffer) {

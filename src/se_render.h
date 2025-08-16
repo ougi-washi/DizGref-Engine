@@ -119,7 +119,7 @@ typedef struct {
     GLuint prev_texture;
     GLuint depth_buffer;
     se_vec2 texture_size;
-    se_vec2 size;
+    se_vec2 scale;
     se_vec2 position;
     se_shader_ptr shader;
 } se_render_buffer;
@@ -191,6 +191,8 @@ extern void se_render_buffer_set_shader(se_render_buffer* buffer, se_shader* sha
 extern void se_render_buffer_unset_shader(se_render_buffer* buffer);
 extern void se_render_buffer_bind(se_render_buffer* buffer);
 extern void se_render_buffer_unbind(se_render_buffer* buf);
+extern void se_render_buffer_set_scale(se_render_buffer* buffer, const se_vec2* scale);
+extern void se_render_buffer_set_position(se_render_buffer* buffer, const se_vec2* position);
 extern void se_render_buffer_cleanup(se_render_buffer* buffer);
 
 // Uniform functions
