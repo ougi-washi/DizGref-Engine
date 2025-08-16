@@ -31,8 +31,8 @@ void se_scene_2d_render(se_scene_2d* scene, se_render_handle* render_handle, se_
         se_render_buffer* buffer = *buffer_ptr;
 
         // render buffer
-        se_shader_use(render_handle, buffer->shader, true);
         se_render_buffer_bind(buffer);
+        se_shader_use(render_handle, buffer->shader, true);
         se_render_clear();
         se_window_render_quad(window);
         se_render_buffer_unbind(buffer);

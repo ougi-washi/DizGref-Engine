@@ -5,7 +5,6 @@
 
 #include "se_math.h"
 #include "se_array.h"
-#include "se_window.h"
 #include <GLFW/glfw3.h>
 #include <time.h>
 #include <assert.h>
@@ -119,6 +118,7 @@ typedef struct {
     GLuint prev_framebuffer;
     GLuint prev_texture;
     GLuint depth_buffer;
+    se_vec2 texture_size;
     se_vec2 size;
     se_vec2 position;
     se_shader_ptr shader;
@@ -186,7 +186,7 @@ extern void se_camera_set_aspect(se_camera* camera, const f32 width, const f32 h
 extern void se_camera_destroy(se_render_handle* render_handle, se_camera* camera);
 
 // Buffer functions
-extern se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height, const c8* fragment_shader_path);
+extern se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, const u32 width, const u32 height, const c8* fragment_shader_path);
 extern void se_render_buffer_set_shader(se_render_buffer* buffer, se_shader* shader);
 extern void se_render_buffer_unset_shader(se_render_buffer* buffer);
 extern void se_render_buffer_bind(se_render_buffer* buffer);

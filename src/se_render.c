@@ -13,17 +13,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-// Fullscreen quad vertex shader
-static const char* quad_vertex_shader = 
-"#version 330 core\n"
-"layout (location = 0) in vec2 aPos;\n"
-"layout (location = 1) in vec2 aTexCoord;\n"
-"out vec2 TexCoord;\n"
-"void main() {\n"
-"   TexCoord = aTexCoord;\n"
-"   gl_Position = vec4(aPos, 0.0, 1.0);\n"
-"}\n";
-
 static f64 se_target_fps = 60.0;
 
 static GLuint compile_shader(const char* source, GLenum type);
@@ -568,9 +557,12 @@ void se_camera_destroy(se_render_handle* render_handle, se_camera* camera) {
 }
  
 // Buffer functions
-se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 width, u32 height, const c8* fragment_shader_path) {
+se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, const u32 width, const u32 height, const c8* fragment_shader_path) {
     se_render_buffer* buffer = se_render_buffers_increment(&render_handle->render_buffers);
-    buffer->size = se_vec(2, width, height);
+   
+    buffer->texture_size = se_vec(2, width, height);
+    buffer->size = se_vec(2, 1., 1.);
+    buffer->position = se_vec(2, 0., 0.);
 
     // Create framebuffer
     glGenFramebuffers(1, &buffer->framebuffer);
@@ -606,7 +598,7 @@ se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, u32 w
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->prev_framebuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buffer->prev_texture, 0);
 
-    buffer->shader = se_shader_load(render_handle, "shaders/default_vert.glsl", fragment_shader_path);
+    buffer->shader = se_shader_load(render_handle, "shaders/render_buffer_vert.glsl", fragment_shader_path);
 
     // Check framebuffer completeness
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -647,7 +639,9 @@ void se_render_buffer_unset_shader(se_render_buffer* buffer) {
 void se_render_buffer_bind(se_render_buffer* buffer) {
     se_render_buffer_copy_to_previous(buffer);
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->framebuffer);
-    glViewport(0, 0, buffer->size.x, buffer->size.y);
+    glViewport(0, 0, buffer->texture_size.x, buffer->texture_size.y);
+    se_shader_set_vec2(buffer->shader, "u_size", &buffer->size);
+    se_shader_set_vec2(buffer->shader, "u_position", &buffer->position);
 }
 
 void se_render_buffer_unbind(se_render_buffer* buf) {

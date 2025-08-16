@@ -12,6 +12,8 @@ i32 main() {
 
     se_scene_2d* scene_2d = se_scene_2d_create(&render_handle, &se_vec(2, WIDTH, HEIGHT));
     se_render_buffer* render_buffer = se_render_buffer_create(&render_handle, WIDTH, HEIGHT, "examples/scene_example/render_buffer_frag.glsl");
+    render_buffer->position = (se_vec2){.5, .5};
+    render_buffer->size = (se_vec2){0.5, 0.5};
     se_scene_2d_add_render_buffer(scene_2d, render_buffer);
     //se_scene_3d scene_3d = {0};
 

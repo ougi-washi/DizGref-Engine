@@ -8,6 +8,7 @@
 #define SE_SCENE_H
 
 #include "se_render.h"
+#include "se_window.h"
 
 #define SE_MAX_SCENES 128
 

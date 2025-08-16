@@ -28,6 +28,7 @@ typedef struct {
 
     GLuint quad_vao;
     GLuint quad_vbo;
+    GLuint quad_ebo;
 
     u16 target_fps;
     se_time time;

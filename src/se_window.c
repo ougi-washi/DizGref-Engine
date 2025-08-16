@@ -61,25 +61,37 @@ static void framebuffer_size_callback(GLFWwindow* glfw_handle, i32 width, i32 he
 }
 
 // TODO: move to opengl.c or such later on
-void create_fullscreen_quad(GLuint* vao, GLuint* vbo) {
-    f32 quad_vertices[] = {
-        // positions   // texCoords
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
+void create_fullscreen_quad(GLuint* vao, GLuint* vbo, GLuint* ebo) {
+    f32 quad_vertices[] = { 
+        // positions     // texCoords 
+        -1.0f,  1.0f,    0.0f, 0.0f,
+        -1.0f, -1.0f,    0.0f, 1.0f,
+         1.0f, -1.0f,    1.0f, 1.0f,
+         1.0f,  1.0f,    1.0f, 0.0f 
+    };
+    
+    GLuint indices[] = {
+        0, 1, 2,  // First triangle
+        2, 3, 0   // Second triangle
     };
     
     glGenVertexArrays(1, vao);
     glGenBuffers(1, vbo);
+    glGenBuffers(1, ebo);
     
     glBindVertexArray(*vao);
+    
     glBindBuffer(GL_ARRAY_BUFFER, *vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
     
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    
+    // Position attribute (location = 0)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
     glEnableVertexAttribArray(0);
     
+    // Texture coordinate attribute (location = 1)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32)));
     glEnableVertexAttribArray(1);
     
@@ -122,7 +134,7 @@ se_window* se_window_create(const char* title, const u32 width, const u32 height
     
     glEnable(GL_DEPTH_TEST);
     
-    create_fullscreen_quad(&new_window->quad_vao, &new_window->quad_vbo);
+    create_fullscreen_quad(&new_window->quad_vao, &new_window->quad_vbo, &new_window->quad_ebo);
     
     new_window->time.current = glfwGetTime();
     new_window->time.last_frame = new_window->time.current;
@@ -142,7 +154,7 @@ extern void se_window_update(se_window* window) {
 
 void se_window_render_quad(se_window* window) {
     glBindVertexArray(window->quad_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 
