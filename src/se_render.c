@@ -642,6 +642,7 @@ void se_render_buffer_bind(se_render_buffer* buffer) {
     glViewport(0, 0, buffer->texture_size.x, buffer->texture_size.y);
     se_shader_set_vec2(buffer->shader, "u_size", &buffer->size);
     se_shader_set_vec2(buffer->shader, "u_position", &buffer->position);
+    se_shader_set_vec2(buffer->shader, "u_texture_size", &buffer->texture_size);
 }
 
 void se_render_buffer_unbind(se_render_buffer* buf) {
