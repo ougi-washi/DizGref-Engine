@@ -158,11 +158,14 @@ typedef struct {
     se_cameras cameras;
     se_models models;
     se_objects_2d objects_2d;
+
+    se_shader* render_quad_shader;
 } se_render_handle;
 
 // helper functions
 extern void se_enable_blending();
 extern void se_disable_blending();
+extern void se_unbind_framebuffer(); // window framebuffer
 extern void se_render_clear();
 extern void se_render_set_background_color(const se_vec4 color);
 
@@ -181,7 +184,7 @@ extern void se_texture_cleanup(se_texture* texture);
 extern se_shader* se_shader_load(se_render_handle* render_handle, const char* vertex_file_path, const char* fragment_file_path);
 extern se_shader* se_shader_load_from_memory(se_render_handle* render_handle, const char* vertex_data, const char* fragment_data);
 extern b8 se_shader_reload_if_changed(se_shader* shader);
-extern void se_shader_use(se_render_handle* render_handle, se_shader* shader, const b8 update_uniforms);
+extern void se_shader_use(se_render_handle* render_handle, se_shader* shader, const b8 update_uniforms, const b8 update_global_uniforms);
 extern void se_shader_cleanup(se_shader* shader);
 extern GLuint se_shader_get_uniform_location(se_shader* shader, const char* name);
 extern void se_shader_set_float(se_shader* shader, const char* name, f32 value);
@@ -216,6 +219,7 @@ extern void se_camera_destroy(se_render_handle* render_handle, se_camera* camera
 extern se_framebuffer* se_framebuffer_create(se_render_handle* render_handle, const se_vec2* size);
 extern void se_framebuffer_bind(se_framebuffer* framebuffer);
 extern void se_framebuffer_unbind(se_framebuffer* framebuffer);
+extern void se_framebuffer_use_quad_shader(se_framebuffer* framebuffer, se_render_handle* render_handle);
 extern void se_framebuffer_cleanup(se_framebuffer* framebuffer);
 
 // Render buffer functions
@@ -236,7 +240,7 @@ extern void se_uniform_set_vec4     (se_uniforms* uniforms, const char* name, co
 extern void se_uniform_set_int      (se_uniforms* uniforms, const char* name, i32 value);
 extern void se_uniform_set_texture  (se_uniforms* uniforms, const char* name, GLuint texture);
 extern void se_uniform_set_buffer_texture(se_uniforms* uniforms, const char* name, se_render_buffer* buffer);
-extern void se_uniform_apply(se_render_handle* render_handle, se_shader* shader);
+extern void se_uniform_apply(se_render_handle* render_handle, se_shader* shader, const b8 update_global_uniforms);
 
 // 2D objects functions
 extern se_object_2d* se_object_2d_create(se_render_handle* render_handle, const c8* fragment_shader_path, const se_vec2* position, const se_vec2* scale);

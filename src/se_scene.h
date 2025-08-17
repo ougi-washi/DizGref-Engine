@@ -17,6 +17,8 @@ typedef struct {
     se_framebuffer_ptr output;
 } se_scene_2d;
 SE_DEFINE_ARRAY(se_scene_2d, se_scenes_2d, SE_MAX_SCENES);
+typedef se_scene_2d* se_scene_2d_ptr;
+SE_DEFINE_ARRAY(se_scene_2d_ptr, se_scenes_2d_ptr, SE_MAX_SCENES);
 
 typedef struct {
     se_models_ptr models;
@@ -27,10 +29,13 @@ typedef struct {
     se_render_buffer_ptr output;
 } se_scene_3d;
 SE_DEFINE_ARRAY(se_scene_3d, se_scenes_3d, SE_MAX_SCENES);
+typedef se_scene_3d* se_scene_3d_ptr;
+SE_DEFINE_ARRAY(se_scene_3d_ptr, se_scenes_3d_ptr, SE_MAX_SCENES);
 
 extern se_scene_2d* se_scene_2d_create(se_render_handle* render_handle, const se_vec2* size);
 extern void se_scene_2d_destroy(se_scene_2d* scene);
 extern void se_scene_2d_render(se_scene_2d* scene, se_render_handle* render_handle, se_window* window);
+extern void se_scene_2d_render_to_screen(se_scene_2d* scene, se_render_handle* render_handle, se_window* window);
 extern void se_scene_2d_add_object(se_scene_2d* scene, se_object_2d* object);
 extern void se_scene_2d_remove_object(se_scene_2d* scene, se_object_2d* object);
 

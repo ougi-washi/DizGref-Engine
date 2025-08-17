@@ -50,7 +50,7 @@ i32 main() {
         se_render_buffer_unbind(model_buf);
 
         // render main shader (screen)
-        se_shader_use(&render_handle, main_shader, true);
+        se_shader_use(&render_handle, main_shader, true, true);
         se_uniform_set_texture(global_uniforms, "model_buffer", model_buf->texture);
         
         se_window_render_screen(window);

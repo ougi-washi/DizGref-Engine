@@ -30,7 +30,7 @@ void se_scene_2d_render(se_scene_2d* scene, se_render_handle* render_handle, se_
         }
         se_object_2d* current_object = *object_ptr;
         se_object_2d_update_uniforms(current_object);
-        se_shader_use(render_handle, current_object->shader, true);
+        se_shader_use(render_handle, current_object->shader, true, true);
         se_window_render_quad(window);
     }
     se_disable_blending();
@@ -66,6 +66,14 @@ void se_scene_2d_render(se_scene_2d* scene, se_render_handle* render_handle, se_
     //    se_window_render_quad(window);
     //    se_render_buffer_unbind(scene->output);
     //}
+}
+
+void se_scene_2d_render_to_screen(se_scene_2d* scene, se_render_handle* render_handle, se_window* window) {
+    se_unbind_framebuffer();
+    se_enable_blending();
+    se_framebuffer_use_quad_shader(scene->output, render_handle);
+    se_window_render_quad(window);
+    se_disable_blending();
 }
 
 void se_scene_2d_add_object(se_scene_2d* scene, se_object_2d* object) {

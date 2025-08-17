@@ -32,6 +32,10 @@ void se_disable_blending() {
     glEnable(GL_DEPTH_TEST);
 }
 
+void se_unbind_framebuffer() {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void se_render_clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0, 0, 0, 0);
@@ -42,8 +46,10 @@ void se_render_set_background_color(const se_vec4 color) {
 }
 
 se_render_handle* se_render_handle_create() {
+    printf("Creating render handle\n");
     se_render_handle* render_handle = malloc(sizeof(se_render_handle));
     memset(render_handle, 0, sizeof(se_render_handle));
+    render_handle->render_quad_shader = se_shader_load(render_handle, "shaders/render_quad_vert.glsl", "shaders/render_quad_frag.glsl");
     return render_handle;
 }
 
@@ -170,7 +176,6 @@ b8 se_shader_load_internal(se_shader* shader) {
         return false;
     }
     shader->program = create_shader_program(vertex_source, fragment_source);
-
     free(vertex_source);
     free(fragment_source);
     
@@ -206,7 +211,6 @@ se_shader* se_shader_load(se_render_handle* render_handle, const char* vertex_fi
     strcpy(new_shader->fragment_path, new_fragment_path);
     free(new_vertex_path);
     free(new_fragment_path);
-    
     if (se_shader_load_internal(new_shader)) {
         return new_shader;
     }
@@ -229,10 +233,10 @@ b8 se_shader_reload_if_changed(se_shader* shader) {
     return false;
 }
 
-void se_shader_use(se_render_handle* render_handle, se_shader* shader, const b8 update_uniforms) {
+void se_shader_use(se_render_handle* render_handle, se_shader* shader, const b8 update_uniforms, const b8 update_global_uniforms) {
     glUseProgram(shader->program);
     if (update_uniforms) {
-        se_uniform_apply(render_handle, shader);
+        se_uniform_apply(render_handle, shader, update_global_uniforms);
     }
 }
 
@@ -493,7 +497,7 @@ void se_model_render(se_render_handle* render_handle, se_model* model, se_camera
         se_mesh* mesh = se_meshes_get(&model->meshes, i);
         se_shader* sh = mesh->shader;
 
-        se_shader_use(render_handle, sh, true);
+        se_shader_use(render_handle, sh, true, true);
 
         se_mat4 vp  = mat4_mul(proj, view);
         se_mat4 mvp = mat4_mul(vp, mesh->matrix); 
@@ -629,6 +633,13 @@ void se_framebuffer_bind(se_framebuffer* framebuffer) {
 
 void se_framebuffer_unbind(se_framebuffer* framebuffer) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void se_framebuffer_use_quad_shader(se_framebuffer* framebuffer, se_render_handle* render_handle) {
+    se_assertf(framebuffer, "se_framebuffer_use_quad_shader :: framebuffer is null");
+    se_assertf(render_handle, "se_framebuffer_use_quad_shader :: render_handle is null");
+    se_shader_set_texture(render_handle->render_quad_shader, "u_texture", framebuffer->texture);
+    se_shader_use(render_handle, render_handle->render_quad_shader, true, false); // we don't want to update global uniforms here
 }
 
 void se_framebuffer_cleanup(se_framebuffer* framebuffer) {
@@ -859,7 +870,7 @@ void se_uniform_set_buffer_texture(se_uniforms* uniforms, const char* name, se_r
     se_uniform_set_texture(uniforms, name, buffer->texture);
 }
 
-void se_uniform_apply(se_render_handle* render_handle, se_shader* shader) {
+void se_uniform_apply(se_render_handle* render_handle, se_shader* shader, const b8 update_global_uniforms) {
     glUseProgram(shader->program);
     u32 texture_unit = 0;
     se_foreach(se_uniforms, shader->uniforms, i) {
@@ -892,7 +903,11 @@ void se_uniform_apply(se_render_handle* render_handle, se_shader* shader) {
                 break;
         }
     }
-    
+   
+    if (!update_global_uniforms) {
+        return;
+    }
+
     // apply global uniforms
     se_uniforms* global_uniforms = se_render_handle_get_global_uniforms(render_handle);
     se_foreach(se_uniforms, *global_uniforms, i) {
@@ -1003,7 +1018,7 @@ static GLuint compile_shader(const char* source, GLenum type) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, NULL);
     glCompileShader(shader);
-    
+
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
@@ -1020,7 +1035,6 @@ static GLuint compile_shader(const char* source, GLenum type) {
 static GLuint create_shader_program(const char* vertex_source, const char* fragment_source) {
     GLuint vertex_shader = compile_shader(vertex_source, GL_VERTEX_SHADER);
     GLuint fragment_shader = compile_shader(fragment_source, GL_FRAGMENT_SHADER);
-    
     if (!vertex_shader || !fragment_shader) {
         if (vertex_shader) glDeleteShader(vertex_shader);
         if (fragment_shader) glDeleteShader(fragment_shader);
