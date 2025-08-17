@@ -18,15 +18,38 @@ static f64 se_target_fps = 60.0;
 static GLuint compile_shader(const char* source, GLenum type);
 static GLuint create_shader_program(const char* vertex_source, const char* fragment_source);
 
+void se_enable_blending() {
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Also disable depth testing if you have it on
+    glDisable(GL_DEPTH_TEST);
+}
+
+void se_disable_blending() {
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void se_render_clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0, 0, 0, 0);
 }
 
 void se_render_set_background_color(const se_vec4 color) {
     glClearColor(color.x, color.y, color.z, color.w);
 }
 
+se_render_handle* se_render_handle_create() {
+    se_render_handle* render_handle = malloc(sizeof(se_render_handle));
+    memset(render_handle, 0, sizeof(se_render_handle));
+    return render_handle;
+}
+
 void se_render_handle_cleanup(se_render_handle* render_handle) {
+    se_assertf(render_handle, "se_render_handle_cleanup :: render_handle is null");
+
     se_foreach(se_models, render_handle->models, i) {
         se_model* curr_model = se_models_get(&render_handle->models, i);
         se_model_cleanup(curr_model);
@@ -47,10 +70,17 @@ void se_render_handle_cleanup(se_render_handle* render_handle) {
         se_model_cleanup(curr_model);
     }
 
+    se_foreach(se_framebuffers, render_handle->framebuffers, i) {
+        se_framebuffer* curr_framebuffer = se_framebuffers_get(&render_handle->framebuffers, i);
+        se_framebuffer_cleanup(curr_framebuffer);
+    }
+
     se_foreach(se_render_buffers, render_handle->render_buffers, i) {
         se_render_buffer* curr_buffer = se_render_buffers_get(&render_handle->render_buffers, i);
         se_render_buffer_cleanup(curr_buffer);
     }
+
+    free(render_handle);
 }
 
 void se_render_handle_reload_changed_shaders(se_render_handle* render_handle) {
@@ -556,7 +586,67 @@ void se_camera_destroy(se_render_handle* render_handle, se_camera* camera) {
     se_cameras_remove(&render_handle->cameras, camera);
 }
  
-// Buffer functions
+// Framebuffer functions
+se_framebuffer* se_framebuffer_create(se_render_handle* render_handle, const se_vec2* size) {
+    se_framebuffer* framebuffer = se_framebuffers_increment(&render_handle->framebuffers);
+    framebuffer->size = *size;
+
+    // Create framebuffer
+    glGenFramebuffers(1, &framebuffer->framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->framebuffer);
+    
+    // Create color texture
+    glGenTextures(1, &framebuffer->texture);
+    glBindTexture(GL_TEXTURE_2D, framebuffer->texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size->x, size->y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer->texture, 0);
+    
+    // Create depth buffer
+    glGenRenderbuffers(1, &framebuffer->depth_buffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, framebuffer->depth_buffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, size->x, size->y);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, framebuffer->depth_buffer);
+   
+    // Check framebuffer completeness
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        fprintf(stderr, "Framebuffer not complete!\n");
+        se_framebuffer_cleanup(framebuffer);
+        return false;
+    }
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    return framebuffer;
+}
+
+void se_framebuffer_bind(se_framebuffer* framebuffer) {
+    glViewport(0, 0, framebuffer->size.x, framebuffer->size.y);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->framebuffer);
+}
+
+void se_framebuffer_unbind(se_framebuffer* framebuffer) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void se_framebuffer_cleanup(se_framebuffer* framebuffer) {
+    if (framebuffer->framebuffer) {
+        glDeleteFramebuffers(1, &framebuffer->framebuffer);
+        framebuffer->framebuffer = 0;
+    }
+    if (framebuffer->texture) {
+        glDeleteTextures(1, &framebuffer->texture);
+        framebuffer->texture = 0;
+    }
+    if (framebuffer->depth_buffer) {
+        glDeleteRenderbuffers(1, &framebuffer->depth_buffer);
+        framebuffer->depth_buffer = 0;
+    }
+}
+
+// Render buffer functions
 se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, const u32 width, const u32 height, const c8* fragment_shader_path) {
     se_render_buffer* buffer = se_render_buffers_increment(&render_handle->render_buffers);
    
@@ -571,7 +661,7 @@ se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, const
     // Create color texture
     glGenTextures(1, &buffer->texture);
     glBindTexture(GL_TEXTURE_2D, buffer->texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -587,7 +677,7 @@ se_render_buffer* se_render_buffer_create(se_render_handle* render_handle, const
     // Create previous texture
     glGenTextures(1, &buffer->prev_texture);
     glBindTexture(GL_TEXTURE_2D, buffer->prev_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -835,6 +925,46 @@ void se_uniform_apply(se_render_handle* render_handle, se_shader* shader) {
                 break;
         }
     }
+}
+
+se_object_2d* se_object_2d_create(se_render_handle* render_handle, const c8* fragment_shader_path, const se_vec2* position, const se_vec2* scale) {
+    se_object_2d* new_object = se_objects_2d_increment(&render_handle->objects_2d);
+    new_object->position = *position;
+    new_object->scale = *scale;
+    se_foreach(se_shaders, render_handle->shaders, i) {
+        se_shader* curr_shader = se_shaders_get(&render_handle->shaders, i);
+        if (curr_shader && strcmp(curr_shader->fragment_path, fragment_shader_path) == 0) {
+            new_object->shader = curr_shader;
+            break;
+        }
+    }
+    if (!new_object->shader) {
+        new_object->shader = se_shader_load(render_handle, SE_OBJECT_2D_VERTEX_SHADER_PATH, fragment_shader_path);
+    }
+    se_assertf(new_object->shader, "se_object_2d_create :: failed to load shader: %s", fragment_shader_path);
+
+    return new_object;
+}
+
+void se_object_2d_destroy(se_render_handle* render_handle, se_object_2d* object) {
+    se_objects_2d_remove(&render_handle->objects_2d, object);
+}
+
+void se_object_2d_set_position(se_object_2d* object, const se_vec2* position) {
+    object->position = *position;
+}
+
+void se_object_2d_set_scale(se_object_2d* object, const se_vec2* scale) {
+    object->scale = *scale;
+}
+
+void se_object_2d_set_shader(se_object_2d* object, se_shader* shader) {
+    object->shader = shader;
+}
+
+void se_object_2d_update_uniforms(se_object_2d* object) {
+    se_shader_set_vec2(object->shader, "u_position", &object->position);
+    se_shader_set_vec2(object->shader, "u_scale", &object->scale);
 }
 
 time_t get_file_mtime(const char* path) {

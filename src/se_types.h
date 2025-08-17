@@ -31,6 +31,6 @@ typedef size_t sz;
 #define MAX_PATH_LENGTH 256
 
 #define se_assert(expr) if (!(expr)) { fprintf(stderr, "Assertion failed: %s\n", #expr); assert(0); }
-#define se_assertf(expr, msg) if (!(expr)) { fprintf(stderr, msg); assert(0); }
+#define se_assertf(expr, ...) if (!(expr)) { fprintf(stderr, "Assertion failed: %s\n", #expr); fprintf(stderr, __VA_ARGS__); assert(0); }
 
 #endif // SE_TYPES_H

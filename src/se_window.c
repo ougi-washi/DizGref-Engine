@@ -133,8 +133,6 @@ se_window* se_window_create(const char* title, const u32 width, const u32 height
     se_init_opengl();
     
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     create_fullscreen_quad(&new_window->quad_vao, &new_window->quad_vbo, &new_window->quad_ebo);
     
@@ -161,9 +159,6 @@ void se_window_render_quad(se_window* window) {
 }
 
 void se_window_render_screen(se_window* window) {
-    glViewport(0, 0, window->width, window->height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    se_window_render_quad(window);
     f64 time_left = 1. / window->target_fps - window->time.delta;
     if (time_left > 0) {
         usleep(time_left * 1000000);
