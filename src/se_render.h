@@ -22,9 +22,7 @@
 #define SE_MAX_NAME_LENGTH 64
 #define SE_MAX_PATH_LENGTH 256
 #define SE_MAX_CAMERAS 32 
-#define SE_MAX_2D_OBJECTS 1024
 
-#define SE_OBJECT_2D_VERTEX_SHADER_PATH "shaders/object_2d_vertex.glsl"
 
 typedef struct {
     se_vec3 position;
@@ -140,15 +138,6 @@ SE_DEFINE_ARRAY(se_render_buffer, se_render_buffers, SE_MAX_RENDER_BUFFERS);
 typedef se_render_buffer* se_render_buffer_ptr;
 SE_DEFINE_ARRAY(se_render_buffer_ptr, se_render_buffers_ptr, SE_MAX_RENDER_BUFFERS);
 
-typedef struct se_object_2d {
-    se_vec2 position;
-    se_vec2 scale;
-    se_shader_ptr shader;
-} se_object_2d;
-SE_DEFINE_ARRAY(se_object_2d, se_objects_2d, SE_MAX_2D_OBJECTS);
-typedef se_object_2d* se_object_2d_ptr;
-SE_DEFINE_ARRAY(se_object_2d_ptr, se_objects_2d_ptr, SE_MAX_2D_OBJECTS);
-
 typedef struct {
     se_framebuffers framebuffers;
     se_render_buffers render_buffers;
@@ -157,7 +146,6 @@ typedef struct {
     se_uniforms global_uniforms;
     se_cameras cameras;
     se_models models;
-    se_objects_2d objects_2d;
 
     se_shader* render_quad_shader;
 } se_render_handle;
@@ -242,13 +230,6 @@ extern void se_uniform_set_texture  (se_uniforms* uniforms, const char* name, GL
 extern void se_uniform_set_buffer_texture(se_uniforms* uniforms, const char* name, se_render_buffer* buffer);
 extern void se_uniform_apply(se_render_handle* render_handle, se_shader* shader, const b8 update_global_uniforms);
 
-// 2D objects functions
-extern se_object_2d* se_object_2d_create(se_render_handle* render_handle, const c8* fragment_shader_path, const se_vec2* position, const se_vec2* scale);
-extern void se_object_2d_destroy(se_render_handle* render_handle, se_object_2d* object);
-extern void se_object_2d_set_position(se_object_2d* object, const se_vec2* position);
-extern void se_object_2d_set_scale(se_object_2d* object, const se_vec2* scale);
-extern void se_object_2d_set_shader(se_object_2d* object, se_shader* shader);
-extern void se_object_2d_update_uniforms(se_object_2d* object);
 
 // Utility functions
 extern time_t get_file_mtime(const char* path);

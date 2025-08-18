@@ -942,46 +942,6 @@ void se_uniform_apply(se_render_handle* render_handle, se_shader* shader, const 
     }
 }
 
-se_object_2d* se_object_2d_create(se_render_handle* render_handle, const c8* fragment_shader_path, const se_vec2* position, const se_vec2* scale) {
-    se_object_2d* new_object = se_objects_2d_increment(&render_handle->objects_2d);
-    new_object->position = *position;
-    new_object->scale = *scale;
-    se_foreach(se_shaders, render_handle->shaders, i) {
-        se_shader* curr_shader = se_shaders_get(&render_handle->shaders, i);
-        if (curr_shader && strcmp(curr_shader->fragment_path, fragment_shader_path) == 0) {
-            new_object->shader = curr_shader;
-            break;
-        }
-    }
-    if (!new_object->shader) {
-        new_object->shader = se_shader_load(render_handle, SE_OBJECT_2D_VERTEX_SHADER_PATH, fragment_shader_path);
-    }
-    se_assertf(new_object->shader, "se_object_2d_create :: failed to load shader: %s", fragment_shader_path);
-
-    return new_object;
-}
-
-void se_object_2d_destroy(se_render_handle* render_handle, se_object_2d* object) {
-    se_objects_2d_remove(&render_handle->objects_2d, object);
-}
-
-void se_object_2d_set_position(se_object_2d* object, const se_vec2* position) {
-    object->position = *position;
-}
-
-void se_object_2d_set_scale(se_object_2d* object, const se_vec2* scale) {
-    object->scale = *scale;
-}
-
-void se_object_2d_set_shader(se_object_2d* object, se_shader* shader) {
-    object->shader = shader;
-}
-
-void se_object_2d_update_uniforms(se_object_2d* object) {
-    se_shader_set_vec2(object->shader, "u_position", &object->position);
-    se_shader_set_vec2(object->shader, "u_scale", &object->scale);
-}
-
 time_t get_file_mtime(const char* path) {
     struct stat st;
     if (stat(path, &st) == 0) {
