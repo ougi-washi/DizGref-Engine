@@ -30,7 +30,8 @@ To run an example, simply run:
 ./bin/example_name
 ```
 
-### Library Dependencies
+### Submodules
+These submodules are added under `lib/`
 * [GLFW](https://github.com/glfw/glfw)
 * [STB](https://github.com/nothings/stb)
 * [portaudio](https://github.com/PortAudio/portaudio). You may need to install:
