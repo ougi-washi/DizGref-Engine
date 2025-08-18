@@ -33,10 +33,9 @@ To run an example, simply run:
 ### Library Dependencies
 * [GLFW](https://github.com/glfw/glfw)
 * [STB](https://github.com/nothings/stb)
-* [portaudio](https://github.com/PortAudio/portaudio) 
-You may need to install 
-Debian: `libpulse-dev` `libasound-dev` `libsndio-dev` `libjack-jackd2-dev`
-Arch: `libpulse` `alsa-lib` `sndio` `jack2`
+* [portaudio](https://github.com/PortAudio/portaudio). You may need to install:
+  * Debian: `libpulse-dev` `libasound-dev` `libsndio-dev` `libjack-jackd2-dev`
+  * Arch: `libpulse` `alsa-lib` `sndio` `jack2`
 
 ### License
 MIT License
