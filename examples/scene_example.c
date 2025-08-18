@@ -49,6 +49,7 @@ i32 main() {
         se_window_render_screen(window);
     }
 
+    se_scene_handle_cleanup(scene_handle);
     se_render_handle_cleanup(render_handle);
     se_window_destroy(window);
     return 0;
