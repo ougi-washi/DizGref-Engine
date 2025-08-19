@@ -204,7 +204,6 @@ void se_window_set_target_fps(se_window* window, const u16 fps) {
 }
 
 
-void 
 void se_window_destroy(se_window* window) {
     se_assertf(window, "se_window_destroy :: window is null");
     se_assertf(window->handle, "se_window_destroy :: window->handle is null");
