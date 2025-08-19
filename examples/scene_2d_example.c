@@ -6,7 +6,7 @@
 #define HEIGHT 1080
 
 i32 main() {
-    se_window* window = se_window_create("Syphax-Engine - Scene Example", WIDTH, HEIGHT);
+    se_window* window = se_window_create("Syphax-Engine - Scene 2D Example", WIDTH, HEIGHT);
     se_render_handle* render_handle = se_render_handle_create();
 
     se_scene_handle* scene_handle = se_scene_handle_create(render_handle);
@@ -27,13 +27,6 @@ i32 main() {
 
     se_scene_2d_render(scene_2d, render_handle, window);
    
-    //se_scene_3d scene_3d = {0};
-
-    //se_shaders_ptr model_shaders = {0};
-    //se_shaders_ptr_add(&model_shaders, se_shader_load(&render_handle, "vert.glsl", "frag_mesh.glsl"));
-    //se_scene_3d_add_model(&scene_3d, se_model_load_obj(&render_handle, "cube.obj", &model_shaders));
-    //se_scene_3d_set_camera(&scene_3d, se_camera_create(&render_handle));
-    
     key_combo exit_keys = {0};
     key_combo_add(&exit_keys, GLFW_KEY_ESCAPE);
 
@@ -42,8 +35,6 @@ i32 main() {
         se_window_check_exit_keys(window, &exit_keys);
         se_window_update(window);
         se_render_handle_reload_changed_shaders(render_handle);
-        //se_scene_3d_render(&scene_3d, &render_handle);
-        
         se_render_clear();
         se_scene_2d_render_to_screen(scene_2d, render_handle, window);
         se_window_render_screen(window);

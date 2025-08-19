@@ -7,34 +7,39 @@
 
 SE_DEFINE_ARRAY(i32, ints, ARRAY_SIZE);
 
+void display_array(ints* array) {
+    printf("Current size: %zu | Elements: ", ints_get_size(array));
+    se_foreach(ints, *array, i) {
+        printf("%d, ", *ints_get(array, i));
+    }
+    printf("\n");
+}
+
 i32 main() {
     
     ints my_ints = {0};
 
+    printf("Adding elements to array\n");
     for (sz i = 0; i < ARRAY_SIZE; i++) {
         ints_add(&my_ints, i);
     }
-    
-    printf("Current size: %zu\n", ints_get_size(&my_ints));
-   
-    se_foreach(ints, my_ints, i) {
-        printf("%d, ", *ints_get(&my_ints, i));
-    }
-    printf("\n");
+    display_array(&my_ints);
 
+    printf("Removing element at index 5\n");
     ints_remove_at(&my_ints, 5);
+    display_array(&my_ints);
 
-    printf("Removed 5th element, current size: %zu\n", ints_get_size(&my_ints));
-    printf("Current 5th element: %d\n", *ints_get(&my_ints, 5));
+    printf("Removing element at index 0\n");
+    ints_remove_at(&my_ints, 0);
+    display_array(&my_ints);
 
-    se_foreach(ints, my_ints, i) {
-        printf("%d, ", *ints_get(&my_ints, i));
-    }
-    printf("\n");
+    printf("Add element with value 10\n");
+    ints_add(&my_ints, 10);
+    display_array(&my_ints);
 
+    printf("Clearing array\n");
     ints_clear(&my_ints);
+    display_array(&my_ints);
 
-    printf("Cleared, current size: %zu\n", ints_get_size(&my_ints));
-   
     return 0;
 }

@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "se_types.h"
 
-// This approach is inspired by arena allocators but per array instead of being block-based to avoid fragmentation and wasted memory
+// This approach is inspired by arena allocators but per array instead of being block-based to avoid fragmentation
 // while offering a simple array handling interface.
 
 #define SE_DEFINE_ARRAY(_type, _array, _size) \
@@ -40,9 +40,11 @@
         return -1; \
     } \
     static sz _array##_find_last(_array* array, _type* value) { \
-        for (sz i = array->size - 1; i >= 0; i--) { \
-            if (&array->data[i] == value) { \
-                return i; \
+        sz index = array->size; \
+        while (index > 0 && index <= array->size) { \
+            index--; \
+            if (&array->data[index] == value) { \
+                return index; \
             } \
         } \
         return -1; \
@@ -79,5 +81,10 @@
 
 #define se_foreach_reverse(_array_type, _array, _it) \
     for (sz _it = _array_type##_get_size(&_array) - 1; _it >= 0; _it--)
+
+// TODO: Known bug:
+// se_array_find_last() has an issue where it goes beyond the array's lower bound
+// This causes some weird behavior when removing elements from the array. 
+// 2025/08/19, tested on multi_window_example.c
 
 #endif // SE_ARRAY_H

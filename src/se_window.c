@@ -203,21 +203,27 @@ void se_window_set_target_fps(se_window* window, const u16 fps) {
     window->target_fps = fps;
 }
 
+
+void 
 void se_window_destroy(se_window* window) {
     se_assertf(window, "se_window_destroy :: window is null");
+    se_assertf(window->handle, "se_window_destroy :: window->handle is null");
 
     glDeleteVertexArrays(1, &window->quad_vao);
     glDeleteBuffers(1, &window->quad_vbo);
 
     glfwDestroyWindow(window->handle);
+    window->handle = NULL;
+
     se_windows* windows_handle = se_windows_handle_get();
     se_windows_remove(windows_handle, window);
     if (se_windows_get_size(windows_handle) == 0) {
-        se_windows_handle_cleanup();                
+        se_windows_handle_cleanup();
     }
 }
 
 void se_window_destroy_all(){
+    // TODO: implement single clear instead of destroying one by one 
     se_windows* windows_handle = se_windows_handle_get();
     se_foreach(se_windows, *windows_handle, i) {
         se_window* window = se_windows_get(windows_handle, i);
