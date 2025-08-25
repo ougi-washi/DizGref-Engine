@@ -2,26 +2,11 @@
 
 #include "se_window.h"
 #include "se_gl.h"
-#include <stdlib.h>
 #include <unistd.h>
 
-static se_windows* windows_handle = NULL;
+//static se_windows* windows_container = NULL;
 
-se_windows* se_windows_handle_get() {
-    if (windows_handle == NULL) {
-        se_assertf(glfwInit(), "Failed to initialize GLFW");
-        windows_handle = malloc(sizeof(se_windows));
-    }
-    return windows_handle;
-}
-
-void se_windows_handle_cleanup() {
-    if (windows_handle) {
-        free(windows_handle);
-        windows_handle = NULL;
-        glfwTerminate();
-    }
-}
+static se_windows windows_container = { 0 };
 
 static void key_callback(GLFWwindow* glfw_handle, i32 key, i32 scancode, i32 action, i32 mods) {
     se_window* window = (se_window*)glfwGetWindowUserPointer(glfw_handle);
@@ -98,26 +83,38 @@ void create_fullscreen_quad(GLuint* vao, GLuint* vbo, GLuint* ebo) {
     glBindVertexArray(0);
 }
 
+void gl_error_callback(i32 error, const c8* description) {
+    printf("GLFW Error %d: %s\n", error, description);
+}
+
 se_window* se_window_create(const char* title, const u32 width, const u32 height) {
-    se_windows* windows = se_windows_handle_get();
-    se_window* new_window = se_windows_increment(windows);
+    glfwSetErrorCallback(gl_error_callback);
+    
+    if (!glfwInit()) {
+        printf("Failed to initialize GLFW\n");
+        return NULL;
+    }
+
+    //se_windows* windows_container = se_windows_handle_get();
+    se_window* new_window = se_windows_increment(&windows_container);
     if (new_window == NULL) {
         printf("Failed to create window\n");
         return NULL;
     }
-    
     // Set OpenGL version
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwSwapInterval(1);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-    
+   
     new_window->handle = glfwCreateWindow(width, height, title, NULL, NULL);
     se_assertf(new_window->handle, "Failed to create GLFW window");
-
+    
+    // TODO: figure out why this is causing errors (GLFW Error 65538: Cannot set swap interval without a current OpenGL or OpenGL ES context)
+    // glfwSwapInterval(1); 
+    
     new_window->width = width;
     new_window->height = height;
     
@@ -141,7 +138,7 @@ se_window* se_window_create(const char* title, const u32 width, const u32 height
     new_window->time.delta = 0;
     new_window->frame_count = 0;
     new_window->target_fps = 60;
-
+    printf("Created window %p\n", new_window);
     return new_window;
 }
 
@@ -214,18 +211,15 @@ void se_window_destroy(se_window* window) {
     glfwDestroyWindow(window->handle);
     window->handle = NULL;
 
-    se_windows* windows_handle = se_windows_handle_get();
-    se_windows_remove(windows_handle, window);
-    if (se_windows_get_size(windows_handle) == 0) {
-        se_windows_handle_cleanup();
+    se_windows_remove(&windows_container, window);
+    if (se_windows_get_size(&windows_container) == 0) {
     }
 }
 
 void se_window_destroy_all(){
     // TODO: implement single clear instead of destroying one by one 
-    se_windows* windows_handle = se_windows_handle_get();
-    se_foreach(se_windows, *windows_handle, i) {
-        se_window* window = se_windows_get(windows_handle, i);
+    se_foreach_reverse(se_windows, windows_container, i) {
+        se_window* window = se_windows_get(&windows_container, i);
         se_window_destroy(window);
     }
 }

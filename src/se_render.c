@@ -851,6 +851,7 @@ void se_uniform_set_int(se_uniforms* uniforms, const char* name, i32 value) {
 }
 
 void se_uniform_set_texture(se_uniforms* uniforms, const char* name, GLuint texture) {
+    // TODO: IMPORTANT: SEG FAULT HERE in 2025-08-24, audio_example.c:45
     se_foreach(se_uniforms, *uniforms, i) {
         se_uniform* found_uniform = se_uniforms_get(uniforms, i);
         if (found_uniform && strcmp(found_uniform->name, name) == 0) {

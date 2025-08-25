@@ -7,7 +7,7 @@
 #define HEIGHT 1080
 
 i32 main() {
-    se_window* window_main = se_window_create("Syphax-Engine - Multi Window Example - Main", WIDTH, HEIGHT);
+    se_window* window_main = se_window_create("Syphax-Engine - Multi Window Example - Window Main", WIDTH, HEIGHT);
     se_window* window_1 = se_window_create("Syphax-Engine - Multi Window Example - Window 1", WIDTH, HEIGHT);
     se_window* window_2 = se_window_create("Syphax-Engine - Multi Window Example - Window 2", WIDTH, HEIGHT);
 
